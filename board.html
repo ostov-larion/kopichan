@@ -1,0 +1,46 @@
+﻿<html>
+	<head>
+		<title>Kopichan</title>
+		<meta charset='utf-8'/>
+		<meta name='viewport' content="width=device-width"/>
+		<script src='js/orbit-db.js'></script>
+		<script src='js/ipfs.min.js'></script>
+		<script src='js/vue.js'></script>
+		<script src='js/main.js'></script>
+		<script src='js/ui/mansory.js'></script>
+		<script src='js/ui/searcher.js'></script>
+		<link id="theme" href='css/light.css' rel='stylesheet'></link>
+		<link href='logo.png' rel='icon'></link>
+	</head>
+	<body>
+		<div class='box' style="">
+			<button onclick='location.href="index.html"' id='main' class='tab'>Главная</button>
+			<button onclick='location.href="board.html"' id='board' class='tab'>Доска</button>
+			<button id='settings' class='tab'>Настройки</button>
+		</div>
+		<searcher id="searcher"></searcher>
+		<button class='box' style='margin-top:0px;padding:5px;cursor:pointer' onclick='document.getElementById("new").style.display=document.getElementById("new").style.display=="none"?"block":"none"'>Загрузить новый контент</button>
+		<div class='box' id="new" style='display:none;width:24.5%'>
+			<span class="dashed">Новый контент</span>
+			<br>
+			<br>
+			Файл: <input type=file id="file"></input>
+			<br>
+			Описание:<input type=text class=inputbox id="desc"></input>
+			<br>
+			Теги:<input type=text class=inputbox id="tags"></input>
+			<br>
+			<button class=inbox onclick="CreateContent()">Создать</button>
+		</div>
+		<mansory id="mansory" :contents="contents"></mansory>
+		</div>
+		<div id="desktop" style="display:none;position:fixed;top:0px;left:0px;width:100%;height:100%">
+			<div id="window" class="box" style="display:none;width:30%;height:10%;margin:0 auto">
+				<button class="inbox" style="margin:0 90%" onclick="ui.window.hide()"><img style="width:40px" src="static/close.svg"></img></button>
+				<div id="window.content"></div>
+				<div id="window.tags" style="height:25%;overflow:auto"></div>
+			</div>
+		</div>
+	</body>
+	<script src='js/ui.js'></script>
+</html>

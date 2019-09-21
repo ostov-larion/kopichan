@@ -1,0 +1,74 @@
+﻿<html>
+	<head>
+		<title>Kopichan</title>
+		<meta charset='utf-8'/>
+		<meta name='viewport' content="width=device-width"/>
+		<link id="theme" href='css/light.css' rel='stylesheet'></link>
+		<link href='logo.png' rel='icon'></link>
+	</head>
+	<body>
+		<div class='box'>
+			<button onclick='location.href="index.html"' id='main' class='tab'>Главная</button>
+			<button onclick='location.href="board.html"' id='board' class='tab'>Доска</button>
+			<button id='settings' class='tab'>Настройки</button>
+		</div>
+		<header class='box'>
+			<img src='logo.png' class='logo'></img>
+			<h1 style='margin-bottom:0px'>Kopichan</h1>
+			<br>
+			<h3 id="slogan" style='margin-top:0px'>Копируй и распространяй!</h3>
+			<br>
+			<span id="desc">Копичан - это децентрализованная анонимная доска контента. Здесь без каких-либо ограничений можно загружать любые файлы и виды медиа-контента. Каждый контент помечается тегами, благодаря которым можно легко искать и сортировать нужные файлы. Философия сайта основывается на <a href="https://ru.wikipedia.org">копимизме.</a></span>
+			<br>
+		</header>
+		<div class="box">
+			<span id="rules_title" class="dashed">Правила / Догмы</span>
+			<ul id="dogmas">
+				<li>Копирование информации нравственно.</li>
+				<li>Распространение информации нравственно.</li>
+				<li>Копимиксирование — более священный вид копирования, чем простое цифровое копирование, так как оно увеличивает и улучшает существующее изобилие информации.</li>
+				<li>Копирование или копимиксирование информации, полученной от другого человека, является актом уважения и глубоким проявлением признательности копимиста.</li>
+				<li>Интернет священен.</li>
+				<li>Программные коды законны.</li>
+			</ul>
+		</div>
+		<div class="box">
+			<span class="dashed">Теги</span><br><br>
+			Для поиска контента используются теги. Поиск по тегам поддерживает простешие логические операции:<br>
+			<ul>
+				<li> И - <code>(пробел)</code></li>
+				<li> ИЛИ - <code>|</code></li>
+				<li> НЕ - <code>-</code></li>
+			</ul>
+			Теги можно группировать с помощью скобок.<br>
+			Допустим, <code>(tag1|tag2) tag3 -tag4</code> означает что нужно искать контент с тегом <code>tag1</code> или  <code>tag2</code> и тегом <code>tag3</code>, но не с тегом  <code>tag4</code>.<br>
+			Пробелы в тегах следует заменять на <code>_</code>.<br>
+			Также есть конвенция - префиксы. Их ставят, чтобы обозначить категорию тега. Префикс и тег суть раздельны с помощью <code>:</code>.<br>
+			Примеры:<br>
+			<code>autor:AutorName</code> - <code>AutorName</code> есть автор арта/видео/аудио/книги/файла.<br>
+			<code>genre:Genre</code> - <code>Genre</code> есть жанр.<br>
+			<code>type:Type</code> - <code>Type</code> есть тип контента, то есть <code>image</code>/<code>video</code>/<code>audio</code>/<code>book</code> (ставится автоматически).<br>
+		</div>
+		<div class="box">
+			<span class="dashed">INB4</span><br><br>
+				Q: Децетрализованная?<br>
+				A: Да. Копичан не использует ни одного центрального сервера для хранения контента и его метаданных. Сайт не сможет закрыться по прихоти хостинга, создателя, гос. служащих, или корпораций.<br>
+				Q: Анонимная?<br>
+				A: Абсолютно. Здесь не есть нужна регистрация. Копичан не хранит никакой информации о пользователях.<br>
+				Q: Доска контента?<br>
+				A: Она же <i>contentboard</i>. Представляет из себя доску из картинок, видео, аудио, и прочих файлов. Является улучшенной версией концепции <a href="https://ru.wikipedia.org/Booru">booru</a>.<br> 
+				Q: Как это работает?<br>
+				A: Основа работы копичана есть <a href="https://github.com/ipfs">IPFS</a>, как транспорт для поставки контента, и <a href="https://github.com/orbitdb/orbit-db/">OrbitDB</a>, как распределенную базу метаданных.<br>
+				Q: Почему так много весит?<br>
+				A: IPFS.js весит 2Mb. Это плата за неубиваемость.<br>
+				A: Почему на моем браузере <b>НИРАБАЕТ?!</b><br>
+				Q: Копичан есть полностью <i>client-side</i> приложение. Оно задействует современные возможности JS. Обнови браузер до последней версии поддерживающей современный web.<br>
+				Q: Почему...<br>
+				A: Потому что.
+		</div>
+		<div class="box">
+			<img src="static/nocopyright.svg" style="width:2em;float:right"></img>
+			<span>Это место объявляется точкой обмена информацией. Копируй и распространяй!</span>
+		</div>
+	</body>
+</html>
