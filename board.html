@@ -3,6 +3,9 @@
 		<title>Kopichan</title>
 		<meta charset='utf-8'/>
 		<meta name='viewport' content="width=device-width"/>
+		<!--<meta http-equiv="Cache-control" content="no-cache">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="-1">-->
 		<script src='js/orbit-db.js'></script>
 		<script src='js/ipfs.min.js'></script>
 		<script src='js/core.js'></script>
@@ -29,8 +32,11 @@
 			<br>
 			Теги:<input type=text class=inputbox id="tags"></input>
 			<br>
-			<div id="preview" style="display:none" class="dashed">
+			<div id="preview" style="display:none;text-align:top" class="dashed">
 			Превью: <video id="preview-video" style="width:70%"></video>
+			</div>
+			<div id="pv-gif" style="display:none;" class="dashed">
+			Превью: <img id="preview-gif" style="width:70%;"></img>
 			</div>
 			<br>
 			<button class=inbox onclick="ui.postingForm.create()">Создать</button>
@@ -44,7 +50,7 @@
 					</div>
 				<div id="window-content"></div>
 				<button class="inbox" style="float:right" onclick="ui.window.content.editTags()"><img id="window-tagedit" src="static/edit.svg" style="width:40px"></img></button>
-				<div id="window-tags" style="height:20%;overflow:auto;" onkeydown="OnKey(event)" contenteditable="false"></div>
+				<div id="window-tags" style="height:25%;overflow:auto;" onkeydown="OnKey(event)" contenteditable="false"></div>
 			</div>
 			<div id="db_load" class="box window" style="text-align:center;width:30%;height:20%">
 				<div id="db_load-content"></div>

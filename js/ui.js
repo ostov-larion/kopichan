@@ -9,7 +9,7 @@
 				$("#window").css({display:"block"});
 				if(ui.window.current.tags.includes('type:image'))
 				{
-					$("#window-content").html(`<center><img style="height:80%;width:auto;" src='https://gateway.ipfs.io/ipfs/${ui.window.current.hash}'></img></center>`);
+					$("#window-content").html(`<center><img style="height:70%;width:auto;border-radius:4px;" src='https://gateway.ipfs.io/ipfs/${ui.window.current.hash}'></img></center>`);
 				}
 				else if(ui.window.current.tags.includes('type:audio'))
 				{
@@ -85,7 +85,12 @@
 			$("#mansory").html("");
 			for(let content in db)
 			{
-				if(db[content].tags.includes('type:image'))
+				if(db[content].tags.includes('mime:image/gif'))
+				{
+					$("#mansory").append(`<div class='box dynamic content-block' onclick="ui.window.content.show('${db[content].hash}')">
+					<img src='https://gateway.ipfs.io/ipfs/${db[content].preview}'></img><span style="font-size:1em">Gif</span></div>`);
+				}
+				else if(db[content].tags.includes('type:image'))
 				{
 					$("#mansory").append(`<div class='box dynamic content-block' onclick="ui.window.content.show('${db[content].hash}')">
 							<img src='https://gateway.ipfs.io/ipfs/${db[content].hash}'></img></div>`);
@@ -102,11 +107,7 @@
 				else if(db[content].tags.includes('type:video'))
 				{
 					$("#mansory").append(`<div class='box dynamic content-block' onclick="ui.window.content.show('${db[content].hash}')">
-					<img src="static/play.svg" style="width:40px;position:absolute;margin:20% 30%;"></img><img src='https://gateway.ipfs.io/ipfs/${db[content].preview}'></img></div>`);
-				}
-				else
-				{
-					
+					<img src='https://gateway.ipfs.io/ipfs/${db[content].preview}'></img><br>Video:${chan.getPrefix(db[content],"file_ex")}</div>`);
 				}
 			}
 		}
@@ -124,10 +125,22 @@
 		onchange:function()
 		{
 			var file=$("#file")[0].files[0];
+			$("#tags")[0].value="";
+			if(ui.postingForm.preview)
+			{
+				ui.postingForm.preview=null;
+				$("#preview").css({display:"none"});
+				$("#pv-gif").css({display:"none"});
+			}
 			if(file.type.indexOf("video")>-1)
 			{
 				$("#preview").css({display:"block"});
 				thumbnail(file,function(blob){ui.postingForm.preview=blob})
+			}
+			if(file.type.indexOf("gif")>-1)
+			{
+				$("#pv-gif").css({display:"block"});
+				thumbnail_gif(file,function(blob){ui.postingForm.preview=blob})
 			}
 		}
 	},
@@ -136,7 +149,7 @@
 		{
 			if(event.key=="Enter")
 			{
-				ui.mansory.render(chan.search($("#searcher-input").value));
+				ui.mansory.render(chan.search($("#searcher-input")[0].value));
 			}
 		}
 	}
@@ -146,14 +159,14 @@ function OnKey(event)
 {
 	if(event.code=='Enter'){event.cancelBubble=true;event.returnValue=false;ui.window.content.editTags();}
 	if(event.code=='Space'){
-document.execCommand('insertHTML',false,'<div class="inbox underline tag">tag</div>');event.cancelBubble=true;event.returnValue=false;}
+document.execCommand('insertHTML',false,'<div class="inbox underline tag"></div>');event.cancelBubble=true;event.returnValue=false;}
 }
 function thumbnail(file,func){
-	fr=new FileReader()
+	var fr=new FileReader()
 	fr.onload=function(){
-    var video = $('#preview-video')[0];
+    var video=$('#preview-video')[0];
 	video.src=fr.result;
-	var canvas = document.createElement('canvas');
+	var canvas=document.createElement('canvas');
 	var getted=false;
 	inter=setInterval(function(){
 	canvas.width=video.videoWidth;
@@ -170,4 +183,22 @@ function thumbnail(file,func){
 	},100)
 }
 fr.readAsDataURL(file)
+}
+function thumbnail_gif(file,func)
+{
+	var fr=new FileReader();
+	fr.onload=function(){
+		gif=$('#preview-gif')[0];
+		gif.src=fr.result;
+		var canvas=document.createElement('canvas');
+		gif.onload=function(){
+			canvas.width=gif.naturalWidth;
+			canvas.height=gif.naturalHeight;
+			canvas.getContext('2d').drawImage(gif, 0, 0);
+			canvas.toBlob(function(blob){
+				func(blob);
+		})
+		}
+	}
+	fr.readAsDataURL(file);
 }

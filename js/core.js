@@ -3,8 +3,12 @@ ipfs=new Ipfs({
 	config: {
 		Addresses: {
 			Swarm: ['/dns4/ws-star.discovery.libp2p.io/tcp/443/wss/p2p-websocket-star']
+			},
+			Bootstrap:[]
+		},
+		"connectionManager": {
+			"maxPeers": 2
 			}
-		}
 	});
 ipfs.on('ready', async () => {
 	orbitdb = await orbitDb.createInstance(ipfs)
@@ -25,6 +29,9 @@ chan={
 	db:[],
 	tagwiki:[],
 	my:[],
+	oninit:function(){},
+	oncontentcreate:function(){},
+	ondbload:function(){},
 	create:function(file,tags,preview)
 	{
 		if(file.constructor!=File){throw Error("First argument is not File")}
@@ -73,16 +80,16 @@ chan={
 	{
 		var res=[];
 		var token="";
-		for(let i in str)
+		for(let i of str)
 		{
-			switch(str[i])
+			switch(i)
 			{
 				case " ":res.push(token);token="";res.push("&&");break;
 				case "-":res.push("!");break;
 				case "|":res.push(token);token="";res.push("||");break;
 				case "(":res.push("(");break;
 				case ")":res.push(token);token="";res.push(")");break;
-				default:token+=str[i];
+				default:token+=i;
 			}
 		}
 		res.push(token);
@@ -97,7 +104,7 @@ chan={
 				case "||":result+="||";break;
 				case "(":result+="(";break;
 				case ")":result+=")";break;
-				default:result+="content.tags.includes('"+i+"')";
+				default:result+="chan.db.all[content].tags.includes('"+i+"')";
 			}
 		}
 		return result;
@@ -120,11 +127,11 @@ chan={
 		}
 		else
 		{
-			for(content of chan.db.all)
+			for(content in chan.db.all)
 			{
 				if(eval(cond))
 				{
-					result.push(content)
+					result.push(chan.db.all[content])
 				}
 			}
 		}
