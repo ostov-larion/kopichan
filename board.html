@@ -5,42 +5,57 @@
 		<meta name='viewport' content="width=device-width"/>
 		<script src='js/orbit-db.js'></script>
 		<script src='js/ipfs.min.js'></script>
-		<script src='js/vue.js'></script>
-		<script src='js/main.js'></script>
-		<script src='js/ui/mansory.js'></script>
-		<script src='js/ui/searcher.js'></script>
+		<script src='js/core.js'></script>
+		<script src='js/jquery-min.js'></script>
 		<link id="theme" href='css/light.css' rel='stylesheet'></link>
 		<link href='logo.png' rel='icon'></link>
 	</head>
 	<body>
-		<div class='box' style="">
+		<div class='box'>
 			<button onclick='location.href="index.html"' id='main' class='tab'>Главная</button>
 			<button onclick='location.href="board.html"' id='board' class='tab'>Доска</button>
 			<button id='settings' class='tab'>Настройки</button>
 		</div>
-		<searcher id="searcher"></searcher>
+		<div class='box searcher' id="searcher">
+			<b style='font-family:Consolas;'>> </b>
+			<input type='text' id="searcher-input" onkeypress="ui.searcher.search(event)" class="searcher" style='border:none;outline:none;font-family:Consolas'></input>
+		</div>
 		<button class='box' style='margin-top:0px;padding:5px;cursor:pointer' onclick='document.getElementById("new").style.display=document.getElementById("new").style.display=="none"?"block":"none"'>Загрузить новый контент</button>
-		<div class='box' id="new" style='display:none;width:24.5%'>
+		<div class='box' id="new" style='display:none;width:28.3%'>
 			<span class="dashed">Новый контент</span>
 			<br>
 			<br>
-			Файл: <input type=file id="file"></input>
-			<br>
-			Описание:<input type=text class=inputbox id="desc"></input>
+			Файл: <input type=file id="file" onchange="ui.postingForm.onchange()"></input>
 			<br>
 			Теги:<input type=text class=inputbox id="tags"></input>
 			<br>
-			<button class=inbox onclick="CreateContent()">Создать</button>
+			<div id="preview" style="display:none" class="dashed">
+			Превью: <video id="preview-video" style="width:70%"></video>
+			</div>
+			<br>
+			<button class=inbox onclick="ui.postingForm.create()">Создать</button>
 		</div>
-		<mansory id="mansory" :contents="contents"></mansory>
+		<div id="mansory" class="mansory"></div>
 		</div>
-		<div id="desktop" style="display:none;position:fixed;top:0px;left:0px;width:100%;height:100%">
-			<div id="window" class="box" style="display:none;width:30%;height:10%;margin:0 auto">
-				<button class="inbox" style="margin:0 90%" onclick="ui.window.hide()"><img style="width:40px" src="static/close.svg"></img></button>
-				<div id="window.content"></div>
-				<div id="window.tags" style="height:25%;overflow:auto"></div>
+		<div id="desktop">
+			<div id="window" class="box window">
+				<div class="window-header">
+					<button class="inbox" style="float:right;margin-right:15" onclick="ui.window.content.hide()"><img style="width:40px" src="static/close.svg"></img></button>
+					</div>
+				<div id="window-content"></div>
+				<button class="inbox" style="float:right" onclick="ui.window.content.editTags()"><img id="window-tagedit" src="static/edit.svg" style="width:40px"></img></button>
+				<div id="window-tags" style="height:20%;overflow:auto;" onkeydown="OnKey(event)" contenteditable="false"></div>
+			</div>
+			<div id="db_load" class="box window" style="text-align:center;width:30%;height:20%">
+				<div id="db_load-content"></div>
 			</div>
 		</div>
+		<div id="err" class="box">
+				<div class="window-header">
+					<button class="inbox" style="float:right;margin-right:15;margin-top:0px" onclick="ui.window.error.hide()"><img style="width:20px" src="static/close.svg"></img></button>
+					</div> 
+				<div id="err-content">error</div>
+			</div>
 	</body>
 	<script src='js/ui.js'></script>
 </html>
