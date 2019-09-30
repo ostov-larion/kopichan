@@ -1,49 +1,57 @@
 ipfs=new Ipfs({
-	EXPERIMENTAL:{pubsub: true}, 
+	EXPERIMENTAL:{pubsub: true},
+	preload:{enabled:false},
+	relay: { enabled: true, hop: { enabled: true, active: true } },
 	config: {
 		Addresses: {
 			Swarm: ['/dns4/ws-star.discovery.libp2p.io/tcp/443/wss/p2p-websocket-star']
-			},
-			Bootstrap:[]
-		},
-		"connectionManager": {
-			"maxPeers": 2
 			}
+		}
 	});
 ipfs.on('ready', async () => {
 	orbitdb = await orbitDb.createInstance(ipfs)
+	chan.oninit()
 	try{
 		db2=await orbitdb.keyvalue("kopichan-db",{accessController:{write: ['*']}});
 		await db2.load();
 		chan.db = await orbitdb.keyvalue("/orbitdb/zdpuAqiF3tf8ZKWSX2yHtsdwh4FteZMJUvfhnrkGgZvroz9iw/kopichan-db",{accessController:{write: ['*']}});
 		await chan.db.load();
+		chan.db.events.on('replicated', chan.onreplicated);
 		Verificate(db2,chan.db);
 		//chan.my=await orbitdb.keyvalue("kopichan-my",{accessController:{write: [orbitdb.identity.publicKey]}})
 		}
 		catch(e){console.log(e)}
-		ui.window.loading.hide()
-		ui.mansory.render(chan.db.all);
+		chan.oninitend()
 });
-ipfs.on('error', function(e){ui.window.error.show(e);console.error(e)})
 chan={
 	db:[],
+	//TODO: TagWiki
 	tagwiki:[],
+	//TODO: my and favs
 	my:[],
+	//TODO: Separate UI from core.js
 	oninit:function(){},
+	oninitend:function(){},
 	oncontentcreate:function(){},
-	ondbload:function(){},
+	oncontentcreated:function(){},
+	onerror:function(){},
+	onreplicated:function(){},
+	onreplicateprogress:function(){},
 	create:function(file,tags,preview)
 	{
 		if(file.constructor!=File){throw Error("First argument is not File")}
 		if(tags.constructor!=Array){throw Error("First argument is not Array")}
 		if(file.type!="")
 		{
+			var mime=file.type
 			tags.push("mime:"+file.type);
 			tags.push("type:"+file.type.split("/")[0]);
 		}
 		tags.push("file_name:"+file.name.replace(" ","_"));
+		var file_name=file.name;
 		tags.push("file_ex:"+file.name.split(".")[file.name.split(".").length-1]);
 		var date=new Date();
+		var strdat=date.toUTCString()
 		tags.push(`date:${date.getDay()}/${date.getMonth()}/${date.getYear()}`);
 		tags.push(`time:${date.getHours()};${date.getMinutes()}`);
 		ipfs.add(file,function(err,data){
@@ -54,14 +62,19 @@ chan={
 					console.log(preview)
 				ipfs.add(new File([preview],"",{type:preview.type}),function(err,previewhash){
 					if(err){throw Error(err)}
-					chan.db.put(data[0].hash,{hash:data[0].hash,tags:tags,preview:previewhash[0].hash}).then(function(){ui.mansory.render(chan.db.all);});
+					chan.db.put(data[0].hash,{hash:data[0].hash,tags:tags,preview:previewhash[0].hash,mime:mime,file_name:file_name}).then(function(){chan.oncontentcreated(chan.db.all[data[0].hash])});
 				})
 			}
 			else
 			{
-				chan.db.put(data[0].hash,{hash:data[0].hash,tags:tags}).then(function(){ui.mansory.render(chan.db.all);});
+				chan.db.put(data[0].hash,{hash:data[0].hash,tags:tags,mime:mime,file_name:file_name}).then(function(){chan.oncontentcreated(chan.db.all[data[0].hash])});
 			}
 		})
+	},
+	//TODO: Directories
+	createDir:function(files,tags,preview)
+	{
+		
 	},
 	edit:function(content){
 		chan.db.set(content.hash,content);
@@ -141,8 +154,35 @@ chan={
 		{
 			return chan.db.all
 		}
+	},
+	getFile:function(content,func)
+	{
+		ipfs.get(content.hash,function(err,data){
+			if(err){chan.onerror(err)}
+			let file=new File([data[0].content],content.file_name,{type:content.mime});
+			let fr=new FileReader()
+			fr.onload=function()
+			{
+				func(fr.result);
+			}
+			fr.readAsDataURL(file);
+		})
+	},
+	getPreview:function(content,func)
+	{
+		ipfs.get(content.preview,function(err,data){
+			if(err){chan.onerror(err)}
+			let file=new File([data[0].content],content.file_name,{type:content.mime});
+			let fr=new FileReader()
+			fr.onload=function()
+			{
+				func(fr.result);
+			}
+			fr.readAsDataURL(file);
+		})
 	}
 }
+ipfs.on('error',chan.onerror)
 function Verificate(db1,db2)
 {
 	for(var i in db1.all)
