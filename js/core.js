@@ -17,6 +17,9 @@ ipfs.on('ready', async () => {
 		chan.db = await orbitdb.keyvalue("/orbitdb/zdpuAqiF3tf8ZKWSX2yHtsdwh4FteZMJUvfhnrkGgZvroz9iw/kopichan-db",{accessController:{write: ['*']}});
 		await chan.db.load();
 		chan.db.events.on('replicated', chan.onreplicated);
+		chan.db.events.on('replicate', chan.onreplicate);
+		chan.db.events.on('replicate.progress', chan.onprogress);
+		chan.db.events.on('peer', function(){console.log("NEw PeEr!")});
 		Verificate(db2,chan.db);
 		//chan.my=await orbitdb.keyvalue("kopichan-my",{accessController:{write: [orbitdb.identity.publicKey]}})
 		}
@@ -29,16 +32,17 @@ chan={
 	tagwiki:[],
 	//TODO: my and favs
 	my:[],
-	//TODO: Separate UI from core.js
 	oninit:function(){},
 	oninitend:function(){},
 	oncontentcreate:function(){},
 	oncontentcreated:function(){},
 	onerror:function(){},
 	onreplicated:function(){},
-	onreplicateprogress:function(){},
-	create:function(file,tags,preview)
+	onreplicate:function(){},
+	onprogress:function(){},
+	create:function(file,tags,opt)
 	{
+		chan.oncontentcreate();
 		if(file.constructor!=File){throw Error("First argument is not File")}
 		if(tags.constructor!=Array){throw Error("First argument is not Array")}
 		if(file.type!="")
@@ -54,27 +58,48 @@ chan={
 		var strdat=date.toUTCString()
 		tags.push(`date:${date.getDay()}/${date.getMonth()}/${date.getYear()}`);
 		tags.push(`time:${date.getHours()};${date.getMinutes()}`);
+		tags.push(`size:${Math.floor(file.size/1024)}Kb`)
 		ipfs.add(file,function(err,data){
 			if(err){throw Error(err)}
 			//chan.my.put(data[0].hash,{hash:data[0].hash,tags:tags});
-			if(preview)
+			if(opt.preview)
 			{
-					console.log(preview)
-				ipfs.add(new File([preview],"",{type:preview.type}),function(err,previewhash){
+				ipfs.add(new File([opt.preview],"",{type:opt.preview.type}),function(err,previewhash){
 					if(err){throw Error(err)}
-					chan.db.put(data[0].hash,{hash:data[0].hash,tags:tags,preview:previewhash[0].hash,mime:mime,file_name:file_name}).then(function(){chan.oncontentcreated(chan.db.all[data[0].hash])});
+					chan.db.put(data[0].hash,{hash:data[0].hash,tags:tags,preview:previewhash[0].hash,mime:mime,file_name:file_name,type:"file"}).then(function(){chan.oncontentcreated(chan.db.all[data[0].hash])});
 				})
 			}
 			else
 			{
-				chan.db.put(data[0].hash,{hash:data[0].hash,tags:tags,mime:mime,file_name:file_name}).then(function(){chan.oncontentcreated(chan.db.all[data[0].hash])});
+				chan.db.put(data[0].hash,{hash:data[0].hash,tags:tags,mime:mime,file_name:file_name,type:"file"}).then(function(){chan.oncontentcreated(chan.db.all[data[0].hash])});
 			}
 		})
 	},
-	//TODO: Directories
-	createDir:function(files,tags,preview)
+	createDir:function(files,name,tags,previews)
 	{
-		
+		console.log(files,name,tags,previews);
+		//if(file.constructor!=FileList){throw Error("First argument is not File")}
+		if(tags.constructor!=Array){throw Error("argument is not Array")}
+		if(name.constructor!=String){throw Error("First argument is not Array")}
+		var date=new Date();
+		var strdat=date.toUTCString()
+		tags.push(`date:${date.getDay()}/${date.getMonth()}/${date.getYear()}`);
+		tags.push(`time:${date.getHours()};${date.getMinutes()}`);
+		var hashs=[];
+		var pvs=[];
+		async function getttt(){
+		for(let file of files)
+		{
+			await ipfs.add(file).then(function(data){hashs.push({hash:data[0].hash,mime:file.type,name:file.name});})
+		}
+		for(let pv of previews)
+		{
+			await ipfs.add(new File([pv],"",{type:"image/png"})).then(function(data){pvs.push(data[0].hash);})
+		}
+		}
+		getttt().then(function(){
+			chan.db.put(name,{name:name,hash:hashs,tags:tags,preview:pvs,type:"dir"}).then(function(){chan.oncontentcreated(name)});
+		})
 	},
 	edit:function(content){
 		chan.db.set(content.hash,content);
@@ -155,8 +180,10 @@ chan={
 			return chan.db.all
 		}
 	},
-	getFile:function(content,func)
+	getFile:function(content,func,index)
 	{
+		if(content.type=="file")
+		{
 		ipfs.get(content.hash,function(err,data){
 			if(err){chan.onerror(err)}
 			let file=new File([data[0].content],content.file_name,{type:content.mime});
@@ -167,9 +194,25 @@ chan={
 			}
 			fr.readAsDataURL(file);
 		})
+		}
+		else if(content.type=="dir")
+		{
+			ipfs.get(content.hash[index].hash,function(err,data){
+			if(err){chan.onerror(err)}
+			let file=new File([data[0].content],content.preview[index].name,{type:content.preview[index].mime});
+			let fr=new FileReader()
+			fr.onload=function()
+			{
+				func(fr.result);
+			}
+			fr.readAsDataURL(file);
+		})
+		}
 	},
-	getPreview:function(content,func)
+	getPreview:function(content,func,index)
 	{
+		if(content.type=="file")
+		{
 		ipfs.get(content.preview,function(err,data){
 			if(err){chan.onerror(err)}
 			let file=new File([data[0].content],content.file_name,{type:content.mime});
@@ -180,6 +223,24 @@ chan={
 			}
 			fr.readAsDataURL(file);
 		})
+		}
+		else if(content.type=="dir")
+		{
+			ipfs.get(content.preview[index],function(err,data){
+			if(err){chan.onerror(err)}
+			let file=new File([data[0].content],content.preview[index].name,{type:content.preview[index].mime});
+			let fr=new FileReader()
+			fr.onload=function()
+			{
+				func(fr.result);
+			}
+			fr.readAsDataURL(file);
+		})
+		}
+	},
+	getMediaStream:function(hash)
+	{
+		
 	}
 }
 ipfs.on('error',chan.onerror)
