@@ -5,7 +5,6 @@ The kopichan is based on two things related to each other: [IPFS](https://github
 # TODO
 - ContentWindow for audio
 - Audio metadata loader
-- Directories
 - Multilanguage support(now russian only)
 - Styles load support
 - Settings
