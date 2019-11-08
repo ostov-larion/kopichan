@@ -11,18 +11,15 @@
 				$("#window-title").html('');
 				if(ui.window.current.type=="file")
 				{
-				if(ui.window.current.tags.includes('type:image'))
+				if(ui.window.current.mime.match(/image/))
 				{
 					let $cur=ui.window.current;
 					$("#window-content").html(`<center><img style="height:70%;width:auto;border-radius:4px;" src='${data}'></img></center>`);
 					chan.getFile(ui.window.current,function(data){
 						if(ui.window.current==$cur)
 						{
-						$("#window-content").html(`<center><img style="height:70%;width:auto;border-radius:4px;" src='${data}'></img></center>`)
-						let img=$("#window-content").children("center")
-						img[0].onmousewheel=function(e){
-							console.log(e,this);
-						}
+							$("#window-content").html(`<center><img style="height:70%;width:auto;border-radius:4px;" src='${data}'></img></center>`)
+							let img=$("#window-content").children("center")
 						}
 					})
 				}
@@ -57,11 +54,11 @@
 					console.log(tag.indexOf("date:"))
 					if(tag.indexOf("date:")==-1&&tag.indexOf("time:")==-1&&tag.indexOf("type:")==-1&&tag.indexOf("mime:")==-1&&tag.indexOf("file_ex:")==-1&&tag.indexOf("file_name:")==-1&&tag.indexOf("size:")==-1)
 					{
-						$("#window-tags").append(`<div class="inbox underline tag" onclick="$('#searcher-input').attr('value','${tag}');ui.window.content.hide()">${tag}</div><span contenteditable=false> </span>`)
+						$("#window-tags").append(`<div class="inbox underline tag" onclick="ui.window.content.hide();ui.window.wiki.show('${tag}')">${tag}</div><span contenteditable=false> </span>`)
 					}
 					else
 					{
-						$("#window-sys-tags").append(`<div class="inbox underline tag" onclick="$('#searcher-input').attr('value','${tag}');ui.window.content.hide()">${tag}</div>`)
+						$("#window-sys-tags").append(`<div class="inbox underline tag" onclick="ui.window.content.hide();ui.window.wiki.show(${tag})">${tag}</div>`)
 					}
 				}
 			},
@@ -91,7 +88,9 @@
 					$("#window-tagedit").attr("src","static/edit.svg");
 					$("#window-tags").attr("contenteditable","false");
 					$(".tag").click(function(){
-					$('#searcher-input').attr('value',this.html());ui.window.content.hide()})
+						ui.window.content.hide();
+						ui.window.wiki.show(this.innerHTML)
+					})
 					ui.window.current.tags=[];
 					$(".tag").each(function(key,el){
 						ui.window.current.tags.push(el.innerHTML)
@@ -110,6 +109,17 @@
 				$("#window").css({height:"95%"});
 				$("#window-content-image").css({height:"95%"});
 				$("#window-footer").css({display:"none"});
+			}
+		},
+		db_init:{
+			show:function(){
+				$("#desktop").css({display:"block"});
+				$("#db_load").css({display:"block"});
+			},
+			hide:function()
+			{
+				$("#db_load").css({display:"none"});
+				$("#desktop").css({display:"none"});
 			}
 		},
 		msg:{
@@ -131,17 +141,84 @@
 				$("#msg").removeClass("opened");
 			}
 		},
-		loading:{
-			show:function()
+		wiki:{
+			current:{},
+			show:function(tag)
 			{
-				$("#db_load").css({display:"block"});
-				$("#desktop").css({display:"block"});
-				$("#db_load-content").html("Инициализация баз данных...");
+				$("#wiki-alias").html("");
+					ui.window.wiki.current=chan.tagwiki.all[tag];
+					$("#wiki-tag").text(chan.tagwiki.all[tag].tag);
+					if(chan.tagwiki.all[tag].desc!="")
+					{
+						$("#wiki-desc").text(chan.tagwiki.all[tag].desc);
+					}
+					else
+					{
+						$("#wiki-desc").text("Ох! Для этого тега еще нет описания. Ты можешь это исправить.");
+					}
+					for(let t of chan.tagwiki.all[tag].aliases)
+					{
+						$("#wiki-alias").append(`<div class='inbox underline tag'>${t}</div>`)
+					}
+					ui.window.wiki.current={tag:tag,desc:"",aliases:[]}
+				$('#wiki-win').show();
+				$('#desktop').show();
 			},
-			hide:function()
+			hide:function(){
+				$("#wiki-win").hide();
+				$("wiki-alias").html('');
+				$("#desktop").hide();
+			},
+			editTags:function()
 			{
-				$("#db_load").css({display:"none"});
-				$("#desktop").css({display:"none"});
+				if($("#wiki-tagedit").attr("src")=="static/save.svg")
+				{
+					$("#wiki-tagedit").attr("src","static/edit.svg");
+					$("#wiki-alias").attr("contenteditable","false");
+					ui.window.wiki.current.aliases=[];
+					$("#wiki-alias>.tag").each(function(key,el){
+						ui.window.wiki.current.aliases.push(el.innerHTML)
+					});
+					chan.editWiki(ui.window.wiki.current);
+				}
+				else
+				{
+					$("#wiki-tagedit").attr("src","static/save.svg");
+					$("#wiki-alias").attr("contenteditable","true");
+					document.execCommand("defaultParagraphSeparator",false,"img");
+				}
+			},
+			editDesc:function()
+			{
+				if($("#wiki-descedit").attr("src")=="static/save.svg")
+				{
+					$("#wiki-descedit").attr("src","static/edit.svg");
+					$("#wiki-desc").attr("contenteditable","false");
+					ui.window.wiki.current.desc=$("#wiki-desc").text();
+					chan.editWiki(ui.window.wiki.current);
+				}
+				else
+				{
+					$("#wiki-descedit").attr("src","static/save.svg");
+					$("#wiki-desc").attr("contenteditable","true");
+					document.execCommand("defaultParagraphSeparator",false,"img");
+				}
+			}
+		}
+	},
+	alltags:{
+		show:function()
+		{
+			$("#desktop").show();
+			$("#all-tags").show();
+			ui.alltags.render()
+		},
+		render:function()
+		{
+			$('#taglist').html("")
+			for(let tag in chan.tagwiki.all)
+			{
+				$('#taglist').append(`<div class='inbox underline tag' style="display:block">${tag}</div>`)
 			}
 		}
 	},
@@ -149,6 +226,14 @@
 		render:function(db)
 		{
 			//db=obj2arr(db).sort("date");
+			for(let content in db)
+			{
+				ui.mansory.renderOne(db[content],db)
+			}
+		},
+		rerender:function(db)
+		{
+			$("#mansory").html("");
 			for(let content in db)
 			{
 				ui.mansory.renderOne(db[content],db)
@@ -233,10 +318,36 @@
 	},
 	postingForm:{
 		preview:[],
+		show:function()
+		{
+			$("#desktop").css({display:"block"});
+			$("#new").css({display:"block"});
+		},
 		create:function()
 		{
 			var files=$("#file")[0].files
-			var tags=$("#tags")[0].value.split(" ");
+			let tags=$("#tags")[0].value.toLowerCase().split(" ");
+			console.log($("#tags")[0].value);
+			if($("#tags")[0].value=="")
+			{
+				ui.window.msg.open();
+				ui.window.msg.show("Ведите теги для файла");
+				throw Error("ВВЕДИ ТЕГ!")
+			}
+			for(let tag in tags)
+			{
+				for(let ent in chan.tagwiki.all)
+				{
+					if(chan.tagwiki.all[ent].aliases.includes(tags[tag]))
+					{
+						tags[tag]=chan.tagwiki.all[ent].tag;
+					}
+				}
+				if(!chan.tagwiki.all[tags[tag]])
+				{
+					chan.tagwiki.all[tags[tag]]={tag:tags[tag],desc:"",aliases:[]}
+				}
+			}
 			if(files.length==1)
 			{
 				chan.create(files[0],tags,{preview:ui.postingForm.preview[0]});
@@ -252,6 +363,8 @@
 			$("#preview").css({display:"none"});
 			$("#tags")[0].value="";
 			$("#dirname")[0].value="";
+			$("#new").css({display:"none"});
+			$("#desktop").css({display:"none"});
 		},
 		onchange:function()
 		{
@@ -297,21 +410,27 @@
 		{
 			if(event.key=="Enter")
 			{
-				ui.mansory.render(chan.search($("#searcher-input")[0].value));
+				ui.mansory.rerender(chan.search($("#searcher-input")[0].value));
 			}
 		}
 	}
 }
-ui.window.loading.show()
+$("#desktop").click(function(){$('.window:not(.nonclosable)').css({display:"none"});if($('.nonclosable').css('display')=="none"){$("#desktop").hide();$('#board').trigger('activate')}})
+ui.window.db_init.show();
 chan.oninitend=function()
 {
-	ui.window.loading.hide()
+	ui.window.db_init.hide()
 	ui.mansory.render(chan.db.all);
-	ui.window.msg.open()
+	ui.window.msg.open();
 	ui.window.msg.show("Репликация базы данных, погодите...");
+}
+chan.oninitprogress=function(progress)
+{
+	$("#db_load").html(`<center>Инициализация баз данных: ${progress}</center>`);
 }
 chan.onerror=function(e)
 {
+	ui.window.msg.open();
 	ui.window.msg.show(e);
 	console.error(e);
 }
@@ -351,6 +470,12 @@ function OnKey(event)
 	if(event.code=='Space'){
 document.execCommand('insertHTML',false,'<span contenteditable=false> </span><div class="inbox underline tag"></div>');event.cancelBubble=true;event.returnValue=false;}
 }
+function OnKeyWiki(event)
+{
+	if(event.code=='Enter'){event.cancelBubble=true;event.returnValue=false;ui.window.wiki.editTags();}
+	if(event.code=='Space'||$('#wiki-alias').html()==""){
+document.execCommand('insertHTML',false,'<span contenteditable=false> </span><div class="inbox underline tag"></div>');event.cancelBubble=true;event.returnValue=false;}
+}
 function thumbnail(file,func){
 	var fr=new FileReader()
 	fr.onload=function(){
@@ -380,7 +505,7 @@ function thumbnail_image(file,func)
 	return new Promise(function(resolve)
 	{
 		var fr=new FileReader();
-	var img=$(`<img style="height:50%;margin:5px"></img>`).appendTo("#preview-content")
+	var img=$(`<img style="width:30%;margin:5px"></img>`).appendTo("#preview-content")
 	fr.onload=function(){
 		var canvas=document.createElement('canvas');
 		img[0].src=fr.result;

@@ -4,14 +4,14 @@ ipfs=new Ipfs({
 	relay: { enabled: true, hop: { enabled: true, active: true } },
 	config: {
 		Addresses: {
-			Swarm: ['/dns4/ws-star.discovery.libp2p.io/tcp/443/wss/p2p-websocket-star']
+				Swarm: ['/dns4/ws-star.discovery.libp2p.io/tcp/443/wss/p2p-websocket-star']
 			}
 		}
 	});
 ipfs.on('ready', async () => {
 	orbitdb = await orbitDb.createInstance(ipfs)
-	chan.oninit()
-	try{
+		chan.oninit();
+		chan.oninitprogress(0)
 		db2=await orbitdb.keyvalue("kopichan-db",{accessController:{write: ['*']}});
 		await db2.load();
 		chan.db = await orbitdb.keyvalue("/orbitdb/zdpuAqiF3tf8ZKWSX2yHtsdwh4FteZMJUvfhnrkGgZvroz9iw/kopichan-db",{accessController:{write: ['*']}});
@@ -21,18 +21,24 @@ ipfs.on('ready', async () => {
 		chan.db.events.on('replicate.progress', chan.onprogress);
 		chan.db.events.on('peer', function(){console.log("NEw PeEr!")});
 		Verificate(db2,chan.db);
-		//chan.my=await orbitdb.keyvalue("kopichan-my",{accessController:{write: [orbitdb.identity.publicKey]}})
-		}
-		catch(e){console.log(e)}
+		chan.oninitprogress(1)
+		chan.my=await orbitdb.keyvalue("kopichan-my",{accessController:{write: [orbitdb.identity.publicKey]}});
+		chan.oninitprogress(2);
+		db3=await orbitdb.keyvalue("kopichan-wiki",{accessController:{write: ['*']}});
+		await db3.load();
+		chan.tagwiki=await orbitdb.keyvalue("/orbitdb/zdpuApsmhedMXY517zmikdbPHjvm6Gboo8r2ex8V8eTUUoJo1/kopichan-wiki",{accessController:{write: ['*']}});
+		await chan.tagwiki.load()
+		chan.oninitprogress(3);
 		chan.oninitend()
 });
 chan={
 	db:[],
 	//TODO: TagWiki
 	tagwiki:[],
-	//TODO: my and favs
 	my:[],
+	fav:[],
 	oninit:function(){},
+	oninitprogress:function(){},
 	oninitend:function(){},
 	oncontentcreate:function(){},
 	oncontentcreated:function(){},
@@ -56,12 +62,12 @@ chan={
 		tags.push("file_ex:"+file.name.split(".")[file.name.split(".").length-1]);
 		var date=new Date();
 		var strdat=date.toUTCString()
-		tags.push(`date:${date.getDay()}/${date.getMonth()}/${date.getYear()}`);
+		tags.push(`date:${date.getDate()}/${date.getMonth()}/${date.getUTCFullYear()}`);
 		tags.push(`time:${date.getHours()};${date.getMinutes()}`);
-		tags.push(`size:${Math.floor(file.size/1024)}Kb`)
+		tags.push(`size:${Math.floor(file.size/1024)}Kb`);
 		ipfs.add(file,function(err,data){
 			if(err){throw Error(err)}
-			//chan.my.put(data[0].hash,{hash:data[0].hash,tags:tags});
+			chan.my.put(data[0].hash,{hash:data[0].hash,tags:tags});
 			if(opt.preview)
 			{
 				ipfs.add(new File([opt.preview],"",{type:opt.preview.type}),function(err,previewhash){
@@ -103,6 +109,10 @@ chan={
 	},
 	edit:function(content){
 		chan.db.set(content.hash,content);
+	},
+	editWiki:function(wiki)
+	{
+		chan.tagwiki.put(wiki.tag,wiki);
 	},
 	getPrefix:function(content,prefix)
 	{
@@ -153,9 +163,20 @@ chan={
 		{
 		var cond=chan.tagParse(str)
 		result=[];
-		if(str.split(" ").includes(":my")||str.split(" ").includes(":fav"))
+		
+		if(str.split(" ").includes(":my"))
 		{
 			for(content of chan.my.all)
+			{
+				if(eval(cond))
+				{
+					result.push(content)
+				}
+			}
+		}
+		else if(str.split(" ").includes(":fav"))
+		{
+			for(content of chan.fav.all)
 			{
 				if(eval(cond))
 				{

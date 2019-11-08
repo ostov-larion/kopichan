@@ -1,0 +1,10 @@
+.tab{
+	border:0px;
+	border-bottom:2px solid white;
+	font-family:Segoe UI Light;
+	background-color:white;
+	outline:none;
+	font-size:15pt;
+	padding:6px;
+	transition:0.5s border-bottom-color;
+	}

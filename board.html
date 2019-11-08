@@ -3,52 +3,34 @@
 		<title>Kopichan</title>
 		<meta charset='utf-8'/>
 		<meta name='viewport' content="width=device-width"/>
-		<!--<meta http-equiv="Cache-control" content="no-cache">
-		<meta http-equiv="Pragma" content="no-cache">
-		<meta http-equiv="Expires" content="-1">-->
 		<script src='js/orbit-db.js'></script>
 		<script src='js/ipfs.min.js'></script>
 		<script src='js/core.js'></script>
 		<script src='js/jquery-min.js'></script>
+		<script src='c/tabs.js'></script>
+		<link href='c/tabs.css' rel='stylesheet'></link>
 		<link id="theme" href='css/light.css' rel='stylesheet'></link>
 		<link href='logo.png' rel='icon'></link>
 	</head>
 	<body>
 		<div class='box'>
 			<button onclick='location.href="index.html"' id='main' class='tab'>Главная</button>
-			<button onclick='location.href="board.html"' id='board' class='tab'>Доска</button>
+			<button onclick='location.href="board.html"' id='board' class='tab active'>Доска</button>
+			<button id='tab-tags' class='tab' onclick="ui.alltags.show()">Теги</button>
+			<button id='blacklist' class='tab' onclick="">Черный лист</button>
 			<button id='settings' class='tab'>Настройки</button>
 		</div>
 		<div class='box searcher' id="searcher">
 			<b style='font-family:Consolas;'>> </b>
 			<input type='text' id="searcher-input" onkeypress="ui.searcher.search(event)" class="searcher" style='border:none;outline:none;font-family:Consolas'></input>
 		</div>
-		<button class='box' style='margin-top:0px;padding:5px;cursor:pointer' onclick='document.getElementById("new").style.display=document.getElementById("new").style.display=="none"?"block":"none"'>Загрузить новый контент</button>
-		<div class='box' id="new" style='display:none;width:28.3%'>
-			<span class="dashed">Новый контент</span>
-			<br>
-			<br>
-			Файл: <input type=file id="file" onchange="ui.postingForm.onchange()" multiple></input>
-			<br>
-			<div id="dir-div" style="display:none">
-				Название директории: <input type=text class=inputbox id="dirname"></input>
-			</div>
-			Теги: <input type=text class=inputbox id="tags"></input>
-			<br>
-			<div id="preview" style="display:none;" class="dashed">
-			Превью: <div style="overflow:auto;width:99%;"><div id="preview-content" style="width:max-content"></div></div>
-			</div>
-			<div id="preview-video" style="display:none;overflow:auto;width:99%;" class="dashed">
-			Превью: <video id="pv-video"></video>
-			</div>
-			<br>
-			<button class=inbox onclick="ui.postingForm.create()">Создать</button>
-		</div>
-		<div id="mansory" class="mansory"></div>
+		<button class='box' style='margin-top:0px;padding:5px;cursor:pointer' onclick='ui.postingForm.show()'>Загрузить новый контент</button>
+		<div id="mansory" class="mansory ui scrolling"></div>
 		</div>
 		<div id="desktop">
+		</div>
 			<div id="window" class="box window">
-				<div class="window-header">
+				<div class="box window">
 				<div id="window-title" style="margin:15px;margin-top:4px;display:inline-block"></div>
 					<button class="inbox" style="float:right;margin-right:15" onclick="ui.window.content.hide()"><img style="width:40px" src="static/close.svg"></img></button>
 					</div>
@@ -60,9 +42,43 @@
 					<div id="window-sys-tags" style="height:15%;overflow:auto;" onkeydown="OnKey(event)" contenteditable="false"></div>
 				</div>
 			</div>
-			<div id="db_load" class="box window" style="text-align:center;width:30%;height:20%">
-				<div id="db_load-content"></div>
+			<div id="wiki-win" class="box window" style="width:50%">
+				<span id="wiki-tag" class="dashed"></span><p>
+				<button class="inbox" style="float:right" onclick="ui.window.wiki.editDesc()"><img id="wiki-descedit" src="static/edit.svg" style="width:40px"></img></button><div id="wiki-desc" contenteditable="false"></div><hr><br>
+				Алиасы:<button class="inbox" style="float:right" onclick="ui.window.wiki.editTags()"><img id="wiki-tagedit" src="static/edit.svg" style="width:40px"></img></button><br>
+				<div id="wiki-alias" style="height:15%;overflow:auto;" onkeydown="OnKeyWiki(event)" contenteditable="false"></div>
 			</div>
+			<div id="all-tags" class="box window" style="width:50%;height:80%">
+				<span class="dashed">Теги</span><p>
+				<div class='box searcher' id="tag-searcher" style="box-shadow:none;border:1px solid lightgray;">
+					<b style='font-family:Consolas;'>> </b>
+					<input type='text' class="searcher" style='border:none;outline:none;font-family:Consolas'></input>
+				</div><br>
+				Coming soon...
+				<div id="taglist"></div>
+			</div>
+			<div id="db_load" class="box window nonclosable" style='width:20%;padding:30px'>
+				<center>Подключение к свармам...</center>
+			</div>
+			<div class='box window' id="new" style='width:28%;max-height:70%'>
+			<span class="dashed">Новый контент</span>
+			<br>
+			<br>
+			Файл: <input type=file id="file" onchange="ui.postingForm.onchange()" multiple></input>
+			<br>
+			<div id="dir-div" style="display:none">
+				Название директории: <input type=text class=inputbox id="dirname"></input>
+			</div>
+			Теги: <input type=text class=inputbox id="tags" style="width:95%"></input>
+			<br>
+			<div id="preview" style="display:none;" class="dashed">
+			Превью: <div><div id="preview-content" style="overflow:auto;width:99%;height:30%;height:200"></div></div>
+			</div>
+			<div id="preview-video" style="display:none;overflow:auto;width:99%;" class="dashed">
+			Превью: <video id="pv-video"></video>
+			</div>
+			<br>
+			<button class=inbox onclick="ui.postingForm.create()">Создать</button>
 		</div>
 		<div id="msg" class="box">
 				<div class="window-header">
@@ -70,6 +86,7 @@
 					</div> 
 				<div id="msg-content">error</div>
 			</div>
+			
 	</body>
 	<script src='js/ui.js'></script>
 </html>

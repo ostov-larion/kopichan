@@ -1,3 +1,15 @@
+::-webkit-scrollbar{
+	width:6px;
+	height:6px;
+}
+::-webkit-scrollbar-track{
+	background:#f1f1f1;
+	border-radius:4px;
+}
+::-webkit-scrollbar-thumb{
+	background:#888;
+	border-radius:4px;
+}
 .box{
 	border-radius:4px;
 	box-shadow:6px 6px 6px 1px lightgray;
@@ -44,17 +56,8 @@ pre{font-family:Segoe UI Light}
 	top:20px;
 	margin-right:5px;
 }
-.tab{
-	border:0px;
-	border-bottom:2px solid white;
-	font-family:Segoe UI Light;
-	background-color:white;
-	outline:none;
-	font-size:15pt;
-	padding:6px;
-	transition:0.5s all;
-	}
-.tab:hover{border-bottom:2px solid black}
+.tab:hover{border-bottom:2px solid lightgray}
+.tab.active{border-bottom:2px solid black}
 button:active{background-color:lightgray}
 .dashed{border-bottom:1px dashed black}
 .inbox{
@@ -91,7 +94,7 @@ button:active{background-color:lightgray}
 #desktop{
 	display:none;
 	position:fixed;
-	background-color:rgba(0,0,0,0.3);
+	background-color:rgba(0,0,0,0.5);
 	top:0px;
 	left:0px;
 	width:100%;
@@ -100,31 +103,24 @@ button:active{background-color:lightgray}
 #msg{
 	display:none;
 	position:fixed;
-	top:0px;
-	left:0px;
-	width:0px;
 	transition:1s all;
 	overflow:hidden;
 }
 #msg.opened{
 	animation:toRight 0.5s;
-	width:50%;
+	width:97%;
+	top:90%;
 	display:block;
-}
-@keyframes toRight{
-	from{
-		width:0px;
-	}
-	to{
-		
-	}
 }
 .window{
 	display:none;
-	width:60%;
-	height:97%;
-	margin:0 auto;
-	overflow:hidden;
+	position:fixed;
+	box-shadow:6px 6px 6px 1px gray;
+	left:50%;
+	top:50%;
+	transform:translate(-50%,-50%);
+	z-index:1001;
+	overflow:auto;
 }
 .window.opened{
 	display:block;
@@ -150,7 +146,8 @@ input{outline:none}
 audio{outline:none}
 video{outline:none;border-radius:4px;}
 img{outline:none;border-radius:4px;}
-code{
+code,kbd,samp{
+	font-family:monospace;
 	background-color:#e6e6e6;
 	border:none;
 	border-radius:2px;
