@@ -54,11 +54,11 @@
 					console.log(tag.indexOf("date:"))
 					if(tag.indexOf("date:")==-1&&tag.indexOf("time:")==-1&&tag.indexOf("type:")==-1&&tag.indexOf("mime:")==-1&&tag.indexOf("file_ex:")==-1&&tag.indexOf("file_name:")==-1&&tag.indexOf("size:")==-1)
 					{
-						$("#window-tags").append(`<div class="inbox underline tag" onclick="ui.window.content.hide();ui.window.wiki.show('${tag}')">${tag}</div><span contenteditable=false> </span>`)
+						$("#window-tags").append(`<div class="inbox underline tag cont" onclick="ui.window.content.hide();ui.window.wiki.show('${tag}')">${tag}</div><span contenteditable=false> </span>`)
 					}
 					else
 					{
-						$("#window-sys-tags").append(`<div class="inbox underline tag" onclick="ui.window.content.hide();ui.window.wiki.show(${tag})">${tag}</div>`)
+						$("#window-sys-tags").append(`<div class="inbox underline tag cont" onclick="ui.window.content.hide();ui.window.wiki.show(${tag})">${tag}</div>`)
 					}
 				}
 			},
@@ -87,12 +87,12 @@
 				{
 					$("#window-tagedit").attr("src","static/edit.svg");
 					$("#window-tags").attr("contenteditable","false");
-					$(".tag").click(function(){
+					$(".tag.cont").click(function(){
 						ui.window.content.hide();
 						ui.window.wiki.show(this.innerHTML)
 					})
 					ui.window.current.tags=[];
-					$(".tag").each(function(key,el){
+					$(".tag.cont").each(function(key,el){
 						ui.window.current.tags.push(el.innerHTML)
 					});
 					chan.edit(ui.window.current);
