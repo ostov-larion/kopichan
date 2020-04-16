@@ -1,9 +1,0 @@
-$('.tab').ready(function(){
-	$('.tab').on('activate',function(){
-		$(this).addClass('active');
-		$(this).siblings().removeClass('active');
-	})
-	$('.tab').click(function(){
-		$(this).trigger('activate')
-	})
-})
