@@ -1,0 +1,23 @@
+.tabs .indicator{
+    background-color: black;
+}
+.tabs .tab a:focus, .tabs .tab a:focus.active {
+    background-color: rgba(0, 0, 0, 0.05);
+    outline: none;
+}
+body{
+    background-color: #EEE;
+}
+.box{
+	border-radius:2px;
+	box-shadow:6px 6px 6px 1px lightgray;
+	background-color:white;
+	padding: 4px;
+	font-family:Segoe UI Light;
+	margin:6px;
+	border:0px solid white;
+	outline:none;
+	overflow:default;
+}
+.dynamic{position:relative}
+.dynamic:hover{top:2px;left:1px;box-shadow:0px 0px 0px 0px gray;}
