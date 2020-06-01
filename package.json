@@ -1,24 +1,24 @@
 {
-    "name": "kopichan-peer-server",
-    "version": "1.0.0",
-    "description": "Kopichan backend",
-    "main": "index.js",
-    "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "keywords": [
-      "kopichan",
-      "backend",
-      "p2p",
-      "peerjs",
-      "heroku"
-    ],
-    "author": "ostov-larion",
-    "license": "MIT",
-    "dependencies": {
-      "peer": "0.5.3"
-    },
-    "engines": {
-      "node": "10.x"
-    }
+  "name": "kopichan-peer-server",
+  "version": "1.0.0",
+  "description": "Kopichan backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "kopichan",
+    "backend",
+    "p2p",
+    "peerjs",
+    "heroku"
+  ],
+  "author": "ostov-larion",
+  "license": "MIT",
+  "dependencies": {
+    "peer": "^0.5.3"
+  },
+  "engines": {
+    "node": "10.x"
+  }
 }
