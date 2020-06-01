@@ -1,3 +1,3 @@
-let { PeerServer } = require('peer');
+let { PeerServer } = require('peer')
 
-PeerServer({ port: 9000, path: '/server' });
+PeerServer({ port: 9000, path: '/server' })
