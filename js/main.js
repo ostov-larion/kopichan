@@ -9,6 +9,7 @@ class Router{
 	set current(v){
 		this.#current = this.routes[v]
 		m.redraw()
+		M.AutoInit()
 	}
 	get current(){
 		return this.#current
@@ -38,12 +39,8 @@ MasonryState = {
     contents: [],
     visible: true,
     add: (file,tags) => {
-        let fr = new FileReader()
-        fr.readAsDataURL(file)
-        fr.onload = () => {
-            MasonryState.contents.push({image:fr.result,tags})
-            m.redraw()
-        }
+        MasonryState.contents.push({image: file, tags})
+		m.redraw()
     }
 }
 
@@ -92,7 +89,7 @@ Board = {
 			m(Modal,{
 				id: 'contentModal',
 				content:[
-					m(MaterialBox,{src: ContentModalState.src,width:document.width>600?"30%":"90%"}),
+					m(MaterialBox,{src: ContentModalState.src,width:innerWidth>600?"30%":"90%"}),
 					m(Chips,{
 						data: ContentModalState.tags
 					})
@@ -138,9 +135,13 @@ addContentModal = () => m(Modal,{
     footer:[
         m('.btn-flat.modal-close',{
             onclick: () => {
-                MasonryState.add(UploadState.file,UploadState.tags)
-				//UploadState.tags = []
-				App.rerender()
+				let fr = new FileReader()
+				fr.readAsDataURL(UploadState.file)
+				fr.onload = () => {
+					//MasonryState.add(fr.result,UploadState.tags)
+					putDB([{hash: md5(fr.result),tags: UploadState.tags, file:fr.result}])
+					UploadState.tags = []
+				}
             }
         },'Upload')
     ]
@@ -179,7 +180,6 @@ Nav = {
 		),
 	oncreate: () => {
 		M.AutoInit()
-		
 	}
 }
 
