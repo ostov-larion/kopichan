@@ -41,6 +41,9 @@ peer.on("open", async() => {
 		main.on("add", async(data) => {
 			MasonryState.add(data.hash,data.file,data.tags)
 		})
+		main.on("put",async(data) => {
+			MasonryState.contents.forEach(e => e.tags = data.tags)
+		})
 	})
 })
 
