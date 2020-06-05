@@ -1,13 +1,10 @@
 (async() => {
-
-isLoading = true
-m.redraw()
-
 peer = new Peer({
 	host: 'kopichan-server.herokuapp.com',
 	port: '',
 	path: '/kopi',
-    secure: true
+    secure: true,
+	debug: 3
 })
 
 
@@ -26,17 +23,9 @@ peer.on("open", async() => {
     main.on('add', value => MasonryState.add(value.file,value.tags))
 	setTimeout( async() => {
 		main.on("sync", async(list) => {
-			if(list.length == 1){
-				MasonryState.contents = await main.getAllLocally()
-				//isLoading = false
-				m.redraw()
-				main.getAll()
-			}
-			else{
-				MasonryState.contents = await main.getAllLocally()
-				main.getAll()
-				m.redraw()
-			}
+			MasonryState.contents = await main.getAllLocally()
+			m.redraw()
+			main.getAll()
 			main.on("post", async() => {
 				MasonryState.contents = await main.getAllLocally()
 				//isLoading = false
