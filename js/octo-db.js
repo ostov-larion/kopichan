@@ -243,6 +243,7 @@ class OctoStoreTransaction extends EventEmmiter {
                     this.peer.connect(id)
                 }
             }
+			this.trigger("sync",list)
         })
     }
     dispatch(data){
