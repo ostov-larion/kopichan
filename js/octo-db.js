@@ -61,6 +61,7 @@ class OctoStoreTransaction extends EventEmmiter {
         this.#db = db
         this.peer = peer
         this.sync()
+		this.peerList = []
     }
     add(value){
         this.scheme.beforeAdd && this.scheme.beforeAdd(value)
@@ -235,6 +236,7 @@ class OctoStoreTransaction extends EventEmmiter {
         })
         this.peer.listAllPeers(list => {
             console.log("Peers:", list)
+			this.peerList = list
             if(!list) return 
             for(let id of list){
                 if(id != this.peer.id) {
