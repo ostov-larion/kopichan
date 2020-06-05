@@ -65,6 +65,7 @@ MasonryItem = {
     ])
 }
 
+isLoading = false
 Board = {
     view: () =>
         m('#board',[
