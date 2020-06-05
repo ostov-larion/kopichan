@@ -36,9 +36,9 @@ Preloader = {
 MasonryState = {
     contents: [],
     visible: true,
-    add: (hash,file,tags) => {
-		if(file.constructor != String) return
-        MasonryState.contents.push({hash, file, tags})
+    add: (hash,file,src,tags) => {
+		if(file.constructor != File) return
+        MasonryState.contents.push({hash, file, src, tags})
 		m.redraw()
     }
 }
@@ -48,13 +48,20 @@ Masonry = {
         m('.masonry',{
             style:{display: MasonryState.visible?'block':'none'},
         },
-            MasonryState.contents.map(({hash,file,tags}) => m(MasonryItem,m('img',{
-				src: file,
+            MasonryState.contents.map(({hash,file,tags,src}) => m(MasonryItem,m('img',{
+				src: src,
 				onclick: () => {
-					console.log(tags)
-					ContentModalState.src = file
+					ContentModalState.src = src
+					ContentModalState.file = file
 					ContentModalState.tags = tags
 					ContentModalState.hash = hash
+					/*M.Chips.init(document.getElementById('contentTags'),{
+						data: tags, 
+						placeholder: 'Tag me', 
+						secondaryPlaceholder: '+Tag',
+						onChipAdd: el => ContentModalState.tags = el[0].M_Chips.chipsData,
+						onChipDelete: el => ContentModalState.tags = el[0].M_Chips.chipsData
+					})*/
 					m.redraw()
 				}
 			})))
@@ -98,7 +105,7 @@ Board = {
 					})
 				],
 				onclose: () => {
-					main.put({hash: ContentModalState.hash, file: ContentModalState.src, tags: ContentModalState.tags})
+					main.put({hash: ContentModalState.hash, file: ContentModalState.file, tags: ContentModalState.tags})
 					ContentModalState.tags = []
 					m.redraw()
 				}
@@ -109,14 +116,13 @@ Board = {
 
 Chips = {
 	view: vnode => 
-		m('.chips'),
+		m('.chips',{id:vnode.attrs.id}),
 	onupdate(vnode){
 		M.Chips.init(vnode.dom,{
 			data: vnode.attrs.data?vnode.attrs.data:[], 
 			placeholder: vnode.attrs.placeholder, 
 			secondaryPlaceholder: vnode.attrs.secondaryPlaceholder,
 			onChipAdd: el => {
-				console.log(el)
 				vnode.attrs.onchange(el[0].M_Chips.chipsData)
 			},
 			onChipDelete: el => vnode.attrs.onchange(el[0].M_Chips.chipsData),
@@ -169,7 +175,7 @@ addContentModal = () => m(Modal,{
 				fr.readAsDataURL(UploadState.file)
 				fr.onload = async() => {
 					console.log(UploadState.tags)
-					await main.add({hash: md5(fr.result),tags: UploadState.tags, file:fr.result})
+					await main.add({hash: md5(fr.result),tags: UploadState.tags, file:UploadState.file})
 					UploadState.tags = []
 					m.redraw()
 				}

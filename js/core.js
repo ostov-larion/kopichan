@@ -23,26 +23,32 @@ page = 0
 
 isLoading = true
 
+FilePeruse = file => new Promise(resolve => {
+	let fr = new FileReader()
+	fr.readAsDataURL(file)
+	fr.onload = () => resolve(fr.result)
+})
+
 peer.on("open", async() => {
     octo = new OctoDB(peer)
     main = await octo.open('main',MainScheme)
-    main.on('add', value => MasonryState.add(value.file,value.tags))
+    main.on('add', data => MasonryState.add(data.file,data.tags))
 	isLoading = false
 	m.redraw()
 	main.on("sync", async(list) => {
-		main.getPageLocally(page,10)
-		main.on('page', value => {
-			MasonryState.add(value.hash,value.file,value.tags)
+		main.getPageLocally(page,50)
+		main.on('page', data => {
+			FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
-		setTimeout(() => main.getPage(page,30),1000)
+		setTimeout(() => main.getPage(page,50),1000)
 		main.on("post", async(data) => {
-			!MasonryState.contents.find(e => e.hash == data.hash) && MasonryState.add(data.hash,data.file,data.tags)
+			!MasonryState.contents.find(e => e.hash == data.hash) && FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
 		main.on("add", async(data) => {
-			MasonryState.add(data.hash,data.file,data.tags)
+			FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
 		main.on("put",async(data) => {
-			MasonryState.contents.forEach(e => e.tags = data.tags)
+			//FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
 	})
 })
