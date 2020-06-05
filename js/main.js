@@ -1,4 +1,4 @@
-let {Tabs, Button, FloatingActionButton, RoundIconButton, FileInput, ModalPanel, Chips, MaterialBox} = materialized
+let {Tabs, Button, FloatingActionButton, RoundIconButton, FileInput, ModalPanel, MaterialBox} = materialized
 
 class Router{
 	#current = ""
@@ -36,8 +36,9 @@ Preloader = {
 MasonryState = {
     contents: [],
     visible: true,
-    add: (file,tags) => {
-        MasonryState.contents.push({file, tags})
+    add: (hash,file,tags) => {
+		if(file.constructor != String) return
+        MasonryState.contents.push({hash, file, tags})
 		m.redraw()
     }
 }
@@ -47,11 +48,13 @@ Masonry = {
         m('.masonry',{
             style:{display: MasonryState.visible?'block':'none'},
         },
-            MasonryState.contents.map(({file,tags}) => m(MasonryItem,m('img',{
+            MasonryState.contents.map(({hash,file,tags}) => m(MasonryItem,m('img',{
 				src: file,
 				onclick: () => {
+					console.log(tags)
 					ContentModalState.src = file
 					ContentModalState.tags = tags
+					ContentModalState.hash = hash
 					m.redraw()
 				}
 			})))
@@ -65,7 +68,6 @@ MasonryItem = {
     ])
 }
 
-isLoading = false
 Board = {
     view: () =>
         m('#board',[
@@ -88,14 +90,38 @@ Board = {
 			m(Modal,{
 				id: 'contentModal',
 				content:[
-					m(MaterialBox,{src: ContentModalState.src,width:innerWidth>600?"30%":"90%"}),
+					m(MaterialBox,{src: ContentModalState.src, width: innerWidth > 600 ? "30%" : "90%"}),
 					m(Chips,{
-						data: ContentModalState.tags
+						id: 'contentTags',
+						data: ContentModalState.tags,
+						onchange: data => ContentModalState.tags = data
 					})
-				]
+				],
+				onclose: () => {
+					main.put({hash: ContentModalState.hash, file: ContentModalState.src, tags: ContentModalState.tags})
+					ContentModalState.tags = []
+					m.redraw()
+				}
 			}),
             m(Masonry),
         ])
+}
+
+Chips = {
+	view: vnode => 
+		m('.chips'),
+	onupdate(vnode){
+		M.Chips.init(vnode.dom,{
+			data: vnode.attrs.data?vnode.attrs.data:[], 
+			placeholder: vnode.attrs.placeholder, 
+			secondaryPlaceholder: vnode.attrs.secondaryPlaceholder,
+			onChipAdd: el => {
+				console.log(el)
+				vnode.attrs.onchange(el[0].M_Chips.chipsData)
+			},
+			onChipDelete: el => vnode.attrs.onchange(el[0].M_Chips.chipsData),
+		})
+	}
 }
 
 Modal = {
@@ -103,7 +129,12 @@ Modal = {
         m('.modal',{id:vnode.attrs.id},[
             m('.modal-content',vnode.attrs.content),
             vnode.attrs.footer?m('.modal-footer',vnode.attrs.footer):''
-        ])
+		]),
+	oncreate(vnode){
+		M.Modal.init(vnode.dom, {
+			onCloseEnd: vnode.attrs.onclose
+		})
+	}
 }
 
 UploadState = {
@@ -126,8 +157,8 @@ addContentModal = () => m(Modal,{
 			secondaryPlaceholder: '+Tag',
 			data: UploadState.tags,
 			onchange: data => {
+				console.log('Data',data)
 				UploadState.tags = data
-				console.log(data)
 			}
 		})
     ],
@@ -136,9 +167,11 @@ addContentModal = () => m(Modal,{
             onclick: () => {
 				let fr = new FileReader()
 				fr.readAsDataURL(UploadState.file)
-				fr.onload = () => {
-					main.add({hash: md5(fr.result),tags: UploadState.tags, file:fr.result})
+				fr.onload = async() => {
+					console.log(UploadState.tags)
+					await main.add({hash: md5(fr.result),tags: UploadState.tags, file:fr.result})
 					UploadState.tags = []
+					m.redraw()
 				}
             }
         },'Upload')
@@ -146,7 +179,8 @@ addContentModal = () => m(Modal,{
 })
 
 ContentModalState = {
-    src: "",
+	src: "",
+	hash: "",
     tags: []
 }
 

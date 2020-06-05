@@ -164,11 +164,61 @@ class OctoStoreTransaction extends EventEmmiter {
             request.onerror = () => reject(request.error)
         })
     }
+	async getPage(page,pageSize){
+		this.scheme.beforeGetPage && this.scheme.beforeGetPage(page,pageSize)
+		this.dispatch({getPage: {page,pageSize,exept: await this.getAllKeys()}})
+	}
+	getPageLocally(page,pageSize){
+		this.scheme.beforeGetPage && this.scheme.beforeGetPage(page,pageSize)
+		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
+		let i = 0
+		store.openCursor().onsuccess = event => {
+			let cursor = event.target.result
+			if(cursor){
+				i++
+				if(i > page * pageSize && i < (page * pageSize) + pageSize){
+					this.trigger("page",cursor.value)
+					cursor.continue()
+				}
+			}
+		}
+	}
+	postPage(page,pageSize,exept){
+		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
+		let i = 0
+		store.openCursor().onsuccess = event => {
+			let cursor = event.target.result
+			if(cursor){
+				i++
+				if(i > page * pageSize && i < (page * pageSize) + pageSize){
+					if(!exept.includes(cursor.key)){
+						this.dispatch({post: cursor.value})
+					}
+					cursor.continue()
+				}
+			}
+		}
+	}
 	getAllLocally(){
 		this.scheme.beforeGetAll && this.scheme.beforeGetAll()
         let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
         let request = store.getAll()
         return new Promise((resolve, reject) => {
+            request.onsuccess = event => {
+                resolve(event.target.result)
+            }
+            request.onerror = () => reject(request.error)
+        })
+	}
+	openCursor(onsuccess){
+		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
+		let i = 0
+		store.openCursor().onsuccess = onsuccess
+	}
+	getAllKeys(){
+		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
+		let request = store.getAllKeys()
+		return new Promise((resolve, reject) => {
             request.onsuccess = event => {
                 resolve(event.target.result)
             }
@@ -194,6 +244,9 @@ class OctoStoreTransaction extends EventEmmiter {
                     let s = await ctx.getAllLocally()
                     this.dispatch({ postAll: s })
                 }
+				if(data.getPage) {
+                    ctx.postPage(data.getPage.page,data.getPage.pageSize,data.getPage.exept)
+                }
                 if(data.get) {
                     let s = await ctx.getLocally(data.get)
                     answer.send({post: s, key: data.get})
@@ -209,7 +262,7 @@ class OctoStoreTransaction extends EventEmmiter {
                     for(let entry of data.postAll){
                         try {
                             this.addLocally(entry)
-                            this.trigger("post",data.post)
+                            this.trigger("postAll",data.post)
                         }
                         catch(e){}
                     }
@@ -222,7 +275,8 @@ class OctoStoreTransaction extends EventEmmiter {
                 }
 				if(data.put) {
                     try {
-                        this.putLocally(data.put)
+                        await this.putLocally(data.put)
+                        this.trigger("put",data.put)
                     }
                     catch(e){}
                 }
@@ -237,13 +291,13 @@ class OctoStoreTransaction extends EventEmmiter {
         this.peer.listAllPeers(list => {
             console.log("Peers:", list)
 			this.peerList = list
-			this.trigger("sync",list)
             if(!list) return 
             for(let id of list){
                 if(id != this.peer.id) {
                     this.peer.connect(id)
                 }
             }
+			this.trigger("sync",list)
         })
     }
     dispatch(data){

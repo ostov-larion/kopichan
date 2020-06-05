@@ -10,32 +10,38 @@ peer = new Peer({
 	debug: 3
 })
 
-
 MainScheme = {
     keyPath: "hash",
     indexes: [
         {name: "hash", unique: true},
         {name: "tags"},
-        {name: "file"}
+        {name: "file"},
+		{name: "options"}
     ]
 }
+page = 0
+
+isLoading = true
 
 peer.on("open", async() => {
     octo = new OctoDB(peer)
     main = await octo.open('main',MainScheme)
     main.on('add', value => MasonryState.add(value.file,value.tags))
-	setTimeout( async() => {
-		main.on("sync", async(list) => {
-			MasonryState.contents = await main.getAllLocally()
-			m.redraw()
-			main.getAll()
-			main.on("post", async() => {
-				MasonryState.contents = await main.getAllLocally()
-				//isLoading = false
-				m.redraw()
-			})
+	isLoading = false
+	m.redraw()
+	main.on("sync", async(list) => {
+		main.getPageLocally(page,10)
+		main.on('page', value => {
+			MasonryState.add(value.hash,value.file,value.tags)
 		})
-	},1000)
+		setTimeout(() => main.getPage(page,30),1000)
+		main.on("post", async(data) => {
+			!MasonryState.contents.find(e => e.hash == data.hash) && MasonryState.add(data.hash,data.file,data.tags)
+		})
+		main.on("add", async(data) => {
+			MasonryState.add(data.hash,data.file,data.tags)
+		})
+	})
 })
 
 })()
