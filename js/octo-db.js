@@ -237,13 +237,13 @@ class OctoStoreTransaction extends EventEmmiter {
         this.peer.listAllPeers(list => {
             console.log("Peers:", list)
 			this.peerList = list
+			this.trigger("sync",list)
             if(!list) return 
             for(let id of list){
                 if(id != this.peer.id) {
                     this.peer.connect(id)
                 }
             }
-			this.trigger("sync",list)
         })
     }
     dispatch(data){
