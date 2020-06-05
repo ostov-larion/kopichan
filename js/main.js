@@ -16,8 +16,6 @@ class Router{
 	}
 }
 
-isLoading = false
-
 Preloader = {
     view: (vnode) =>
         m('.preloader-wrapper',{class:vnode.attrs.active?'active':''},[
@@ -39,7 +37,7 @@ MasonryState = {
     contents: [],
     visible: true,
     add: (file,tags) => {
-        MasonryState.contents.push({image: file, tags})
+        MasonryState.contents.push({file, tags})
 		m.redraw()
     }
 }
@@ -49,12 +47,12 @@ Masonry = {
         m('.masonry',{
             style:{display: MasonryState.visible?'block':'none'},
         },
-            MasonryState.contents.map(({image,tags}) => m(MasonryItem,m('img',{
-				src: image,
+            MasonryState.contents.map(({file,tags}) => m(MasonryItem,m('img',{
+				src: file,
 				onclick: () => {
-					ContentModalState.src = image
+					ContentModalState.src = file
 					ContentModalState.tags = tags
-					App.rerender()
+					m.redraw()
 				}
 			})))
         )
@@ -138,8 +136,7 @@ addContentModal = () => m(Modal,{
 				let fr = new FileReader()
 				fr.readAsDataURL(UploadState.file)
 				fr.onload = () => {
-					//MasonryState.add(fr.result,UploadState.tags)
-					putDB([{hash: md5(fr.result),tags: UploadState.tags, file:fr.result}])
+					main.add({hash: md5(fr.result),tags: UploadState.tags, file:fr.result})
 					UploadState.tags = []
 				}
             }
