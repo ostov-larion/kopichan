@@ -25,19 +25,21 @@ peer.on("open", async() => {
     main = await octo.open('main',MainScheme)
     main.on('add', value => MasonryState.add(value.file,value.tags))
 	setTimeout( async() => {
-		main.on("sync", list => {
+		main.on("sync", async(list) => {
 			if(list.length == 1){
-				MasonryState.contents = main.getAllLocally()
-				isLoading = false
+				MasonryState.contents = await main.getAllLocally()
+				//isLoading = false
 				m.redraw()
 				main.getAll()
 			}
 			else{
+				MasonryState.contents = await main.getAllLocally()
 				main.getAll()
+				m.redraw()
 			}
 			main.on("post", async() => {
 				MasonryState.contents = await main.getAllLocally()
-				isLoading = false
+				//isLoading = false
 				m.redraw()
 			})
 		})
