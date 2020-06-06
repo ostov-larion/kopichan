@@ -168,18 +168,18 @@ class OctoStoreTransaction extends EventEmmiter {
 		this.scheme.beforeGetPage && this.scheme.beforeGetPage(page,pageSize)
 		this.dispatch({getPage: {page,pageSize,exept: await this.getAllKeys()}})
 	}
-	getPageLocally(page,pageSize){
+	getPageLocally(page,pageSize,current){
 		this.scheme.beforeGetPage && this.scheme.beforeGetPage(page,pageSize)
 		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
 		let i = 0
 		store.openCursor().onsuccess = event => {
 			let cursor = event.target.result
 			if(cursor){
-				i++
-				if(i > page * pageSize && i < (page * pageSize) + pageSize){
+				if(i <= (page * pageSize) + pageSize){
 					this.trigger("page",cursor.value)
 					cursor.continue()
 				}
+				i++
 			}
 		}
 	}
@@ -189,13 +189,13 @@ class OctoStoreTransaction extends EventEmmiter {
 		store.openCursor().onsuccess = event => {
 			let cursor = event.target.result
 			if(cursor){
-				i++
-				if(i > page * pageSize && i < (page * pageSize) + pageSize){
+				if(i >= page * pageSize && i <= (page * pageSize) + pageSize){
 					if(!exept.includes(cursor.key)){
 						this.dispatch({post: cursor.value})
 					}
 					cursor.continue()
 				}
+				i++
 			}
 		}
 	}

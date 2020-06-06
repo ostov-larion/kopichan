@@ -1,3 +1,7 @@
+let page = 0
+let pageSize = window.innerWidth > 600 ? 50 : 10
+
+let isLoading = true;
 (async() => {
 peer = new Peer({
 	host: 'kopichan-server.herokuapp.com',
@@ -19,9 +23,6 @@ MainScheme = {
 		{name: "options"}
     ]
 }
-page = 0
-
-isLoading = true
 
 FilePeruse = file => new Promise(resolve => {
 	let fr = new FileReader()
@@ -36,13 +37,13 @@ peer.on("open", async() => {
 	isLoading = false
 	m.redraw()
 	main.on("sync", async(list) => {
-		main.getPageLocally(page,50)
+		main.getPageLocally(page,pageSize)
 		main.on('page', data => {
 			FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
-		setTimeout(() => main.getPage(page,50),1000)
+		setTimeout(() => main.getPage(page,pageSize),1000)
 		main.on("post", async(data) => {
-			!MasonryState.contents.find(e => e.hash == data.hash) && FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
+			FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
 		main.on("add", async(data) => {
 			FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))

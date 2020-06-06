@@ -38,6 +38,7 @@ MasonryState = {
     visible: true,
     add: (hash,file,src,tags) => {
 		if(file.constructor != File) return
+		if(MasonryState.contents.find(e => e.hash == hash)) return true
         MasonryState.contents.push({hash, file, src, tags})
 		m.redraw()
     }
@@ -64,17 +65,16 @@ Masonry = {
 					})*/
 					m.redraw()
 				}
-			})))
+			})))//.concat(new Array(10).map(() => m('.masonry-item.dynamic','  ')))
         )
 }
 
 MasonryItem = {
     view: (vnode) =>
-    m('a.masonry-item.box.dynamic.modal-trigger[href=#contentModal]',vnode.attrs,[
-        m('.masonry-content',vnode.children)
-    ])
+		m('a.masonry-item.box.dynamic.modal-trigger[href=#contentModal]',vnode.attrs,[
+			m('.masonry-content',vnode.children)
+		])
 }
-
 Board = {
     view: () =>
         m('#board',[
@@ -97,7 +97,7 @@ Board = {
 			m(Modal,{
 				id: 'contentModal',
 				content:[
-					m(MaterialBox,{src: ContentModalState.src, width: innerWidth > 600 ? "30%" : "90%"}),
+					m(MaterialBox,{src: ContentModalState.src, width: window.innerWidth > 600 ? '35%' : "95%"}),
 					m(Chips,{
 						id: 'contentTags',
 						data: ContentModalState.tags,
@@ -108,15 +108,20 @@ Board = {
 					main.put({hash: ContentModalState.hash, file: ContentModalState.file, tags: ContentModalState.tags})
 					ContentModalState.tags = []
 					m.redraw()
+				},
+				onopen: () => {
+					//document.getElementById('contentModal').style.width = '80%'
+					//document.getElementById('contentModal').style.height = '100%'
 				}
 			}),
             m(Masonry),
+			m('#scroll','    ')
         ])
 }
 
 Chips = {
 	view: vnode => 
-		m('.chips',{id:vnode.attrs.id}),
+		m('.chips',{id:vnode.attrs.id,class:vnode.attrs.class}),
 	onupdate(vnode){
 		M.Chips.init(vnode.dom,{
 			data: vnode.attrs.data?vnode.attrs.data:[], 
@@ -138,7 +143,9 @@ Modal = {
 		]),
 	oncreate(vnode){
 		M.Modal.init(vnode.dom, {
-			onCloseEnd: vnode.attrs.onclose
+			onCloseEnd: vnode.attrs.onclose,
+			onOpenStart: vnode.attrs.onopen,
+			preventScroll: true
 		})
 	}
 }
@@ -174,8 +181,12 @@ addContentModal = () => m(Modal,{
 				let fr = new FileReader()
 				fr.readAsDataURL(UploadState.file)
 				fr.onload = async() => {
-					console.log(UploadState.tags)
-					await main.add({hash: md5(fr.result),tags: UploadState.tags, file:UploadState.file})
+					let sorted = UploadState.tags.sort((a,b) => {
+						if(a.tag > b.tag) return 1
+						if(a.tag < b.tag) return -1
+						return 0
+					})
+					await main.add({hash: md5(fr.result),tags: sorted, file:UploadState.file})
 					UploadState.tags = []
 					m.redraw()
 				}
@@ -237,6 +248,28 @@ App = {
         ])
 }
 
+
+isInViewport = function(elem) {
+    var bounding = elem.getBoundingClientRect();
+    return (
+        bounding.top >= 0 &&
+        bounding.left >= 0 &&
+        bounding.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        bounding.right <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+};
+
 m.mount(document.body,App)
+
+document.onscroll = async function(){
+	console.log('Scroll')
+	if(isInViewport(document.getElementById('scroll'))) {
+		console.log('VIEWPORT!!!')
+		if(await main.count() > page*pageSize){
+			page++
+			main.getPageLocally(page,pageSize,MasonryState.contents.length-1)
+		}
+	}
+}
 
 document.querySelector('.drag-target').style = 'z-index:999;width:20px'
