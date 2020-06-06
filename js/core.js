@@ -33,19 +33,20 @@ FilePeruse = file => new Promise(resolve => {
 peer.on("open", async() => {
     octo = new OctoDB(peer)
     main = await octo.open('main',MainScheme)
-    main.on('add', data => MasonryState.add(data.file,data.tags))
 	isLoading = false
 	m.redraw()
 	main.on("sync", async(list) => {
 		main.getPageLocally(page,pageSize)
 		main.on('page', data => {
+			console.log(data)
 			FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
-		setTimeout(() => main.getPage(page,pageSize),1000)
+		setTimeout(async() => main.getPage(page,pageSize,await main.getAllKeys()),1000)
 		main.on("post", async(data) => {
 			FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
 		main.on("add", async(data) => {
+			console.log(data)
 			FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
 		main.on("put",async(data) => {
