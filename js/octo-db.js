@@ -80,6 +80,7 @@ class OctoStoreTransaction extends EventEmmiter {
         let request = store.add(value)
         this.trigger("add",value)
         return new Promise((resolve, reject) => {
+			value.file = new File([value.file],'file',value.mime)
             request.onsuccess = () => resolve(value)
             request.onerror = () => reject(request.error)
         })
@@ -101,6 +102,7 @@ class OctoStoreTransaction extends EventEmmiter {
         let request = store.put(value)
         this.trigger("put",value)
         return new Promise((resolve, reject) => {
+			value.file = new File([value.file],'file',value.mime)
             request.onsuccess = () => resolve(value)
             request.onerror = () => reject(request.error)
         })
