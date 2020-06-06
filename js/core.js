@@ -20,6 +20,7 @@ MainScheme = {
         {name: "hash", unique: true},
         {name: "tags"},
         {name: "file"},
+		{name: "mime"},
 		{name: "options"}
     ]
 }
@@ -39,14 +40,14 @@ peer.on("open", async() => {
 		main.getPageLocally(page,pageSize)
 		main.on('page', data => {
 			console.log(data)
-			FilePeruse(new File([data.file])).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
+			FilePeruse(new File([data.file],'file',{type:data.mime})).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
 		setTimeout(async() => main.getPage(page,pageSize,await main.getAllKeys()),1000)
 		main.on("post", async(data) => {
-			FilePeruse(new File([data.file])).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
+			FilePeruse(new File([data.file],'file',{type:data.mime})).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
 		main.on("add", async(data) => {
-			FilePeruse(new File([data.file])).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
+			FilePeruse(new File([data.file],'file',{type:data.mime})).then(src => MasonryState.add(data.hash,data.file,src,data.tags))
 		})
 		main.on("put",async(data) => {
 			//FilePeruse(data.file).then(src => MasonryState.add(data.hash,data.file,src,data.tags))

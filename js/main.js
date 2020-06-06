@@ -105,7 +105,7 @@ Board = {
 					})
 				],
 				onclose: () => {
-					main.put({hash: ContentModalState.hash, file: ContentModalState.file, tags: ContentModalState.tags})
+					main.put({hash: ContentModalState.hash, file: ContentModalState.file, mime: ContentModalState.file.type, tags: ContentModalState.tags})
 					ContentModalState.tags = []
 					m.redraw()
 				},
