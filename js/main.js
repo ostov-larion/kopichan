@@ -9,7 +9,6 @@ class Router{
 	set current(v){
 		this.#current = this.routes[v]
 		m.redraw()
-		M.AutoInit()
 	}
 	get current(){
 		return this.#current

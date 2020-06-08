@@ -3,12 +3,14 @@ let pageSize = window.innerWidth > 600 ? 50 : 10
 
 let isLoading = true;
 (async() => {
+	
+let iceServers = await fetch('https://cors-anywhere.herokuapp.com/https://kopichan-turn-server.herokuapp.com')
 peer = new Peer({
 	host: 'kopichan-server.herokuapp.com',
 	port: '',
 	path: '/kopi',
 	config: {
-		iceServers: [{"url":"stun:global.stun.twilio.com:3478?transport=udp","urls":"stun:global.stun.twilio.com:3478?transport=udp"},{"url":"turn:global.turn.twilio.com:3478?transport=udp","username":"1e1e61a1720726ebdc14c617f8924bef14c4d6bf514f7ca6d8d8ca23d4cbf5d9","urls":"turn:global.turn.twilio.com:3478?transport=udp","credential":"NtwcLYIjTCy5w8QBaVBa7v4wJTKPDGr4u7ufKffIMq8="},{"url":"turn:global.turn.twilio.com:3478?transport=tcp","username":"1e1e61a1720726ebdc14c617f8924bef14c4d6bf514f7ca6d8d8ca23d4cbf5d9","urls":"turn:global.turn.twilio.com:3478?transport=tcp","credential":"NtwcLYIjTCy5w8QBaVBa7v4wJTKPDGr4u7ufKffIMq8="},{"url":"turn:global.turn.twilio.com:443?transport=tcp","username":"1e1e61a1720726ebdc14c617f8924bef14c4d6bf514f7ca6d8d8ca23d4cbf5d9","urls":"turn:global.turn.twilio.com:443?transport=tcp","credential":"NtwcLYIjTCy5w8QBaVBa7v4wJTKPDGr4u7ufKffIMq8="}]
+		iceServers: iceServers.json()
 	},
     secure: true,
 	debug: 3
