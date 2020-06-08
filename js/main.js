@@ -75,6 +75,7 @@ MasonryItem = {
 			m('.masonry-content',vnode.children)
 		])
 }
+SearchTags = []
 Board = {
     view: () =>
         m('#board',[
@@ -82,7 +83,23 @@ Board = {
 				m(Chips,{
 					id:'search',
 					placeholder: ' Search with tags',
-					secondaryPlaceholder: '+Tag'
+					data: SearchTags,
+					secondaryPlaceholder: '+Tag',
+					onchange: async(data) => {
+						SearchTags = data
+						if(!data.length){
+							MasonryState.contents = []
+							page = 0
+							main.getPageLocally(page,pageSize)
+							m.redraw()
+						}
+						let r = await main.search(data)
+						for(let i of r){
+							i.src = await FilePeruse(i.file)
+						}
+						MasonryState.contents = r
+						m.redraw()
+					}
 				})
 			),
             m('.center-align',{style:{position:'absolute',top:screen.height/2,left:screen.width/2.3}}, m(Preloader,{active:isLoading})),
@@ -104,12 +121,17 @@ Board = {
 						onchange: data => ContentModalState.tags = data
 					})
 				],
-				onclose: () => {
-					main.put({hash: ContentModalState.hash, file: ContentModalState.file, mime: ContentModalState.file.type, tags: ContentModalState.tags})
+				onclose: async() => {
+					main.dispatch({setTags:{hash: ContentModalState.hash, tags: ContentModalState.tags}})
+					let value = await main.getLocally(ContentModalState.hash)
+                    value.tags = ContentModalState.tags
+                    await main.putLocally(value)
 					ContentModalState.tags = []
+					ContentModalState.prevTags = []
 					m.redraw()
 				},
 				onopen: () => {
+					ContentModalState.prevTags = ContentModalState.tags
 					//document.getElementById('contentModal').style.width = '80%'
 					//document.getElementById('contentModal').style.height = '100%'
 				}
@@ -273,3 +295,17 @@ document.onscroll = async function(){
 }
 
 document.querySelector('.drag-target').style = 'z-index:999;width:20px'
+
+function deepEqual(obj1,obj2){
+	if(typeof obj1 == 'object' && typeof obj2 == 'object') {
+		if(obj1.length && obj2.length) return obj1.length == obj2.length
+		for(let i in obj1){
+			if(deepEqual(obj1[i],obj2[i])){
+				return true
+			}
+		}
+	}
+	else {
+		return obj1 == obj2
+	}
+}

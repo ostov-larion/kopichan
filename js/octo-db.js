@@ -15,7 +15,7 @@ class OctoDB {
                 }
                 resolve(new OctoStoreTransaction(name,db,scheme,this.peer))
             }
-            request.onsuccess = event =>{
+            request.onsuccess = event => {
                 if(this.created) return
                 let db =  event.target.result
                 resolve(new OctoStoreTransaction(name,db,scheme,this.peer))
@@ -66,6 +66,7 @@ class OctoStoreTransaction extends EventEmmiter {
     add(value){
         this.scheme.beforeAdd && this.scheme.beforeAdd(value)
         let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
+        value.file = new File([value.file],'file',{type: value.mime})
         let request = store.add(value)
         this.dispatch({add: value})
         this.trigger("add",value)
@@ -77,10 +78,10 @@ class OctoStoreTransaction extends EventEmmiter {
     addLocally(value){
         this.scheme.beforeAdd && this.scheme.beforeAdd(value)
         let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
+        value.file = new File([value.file],'file',{type: value.mime})
         let request = store.add(value)
         this.trigger("add",value)
         return new Promise((resolve, reject) => {
-			value.file = new File([value.file],'file',value.mime)
             request.onsuccess = () => resolve(value)
             request.onerror = () => reject(request.error)
         })
@@ -88,6 +89,7 @@ class OctoStoreTransaction extends EventEmmiter {
     put(value){
         this.scheme.beforePut && this.scheme.beforePut(value)
         let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
+        value.file = new File([value.file],'file',{type: value.mime})
         let request = store.put(value)
         this.dispatch({put: value})
         this.trigger("put",value)
@@ -99,10 +101,11 @@ class OctoStoreTransaction extends EventEmmiter {
     putLocally(value){
         this.scheme.beforePut && this.scheme.beforePut(value)
         let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
+        if(value.file.constructor != File)
+            value.file = new File([value.file],'file',{type: value.mime})
         let request = store.put(value)
         this.trigger("put",value)
         return new Promise((resolve, reject) => {
-			value.file = new File([value.file],'file',value.mime)
             request.onsuccess = () => resolve(value)
             request.onerror = () => reject(request.error)
         })
@@ -238,8 +241,8 @@ class OctoStoreTransaction extends EventEmmiter {
         let ctx = this
         this.peer.on("connection", connection => {
             if(this.peer.connections[connection.peer].length>=3) return
-            console.log("New peer")
             let answer = this.peer.connect(connection.peer)
+            answer.on("open", () => this.trigger("peer",connection.peer))
             connection.on("data", async(data) => {
                 console.log("Data:", data)
                 if(data.getAll) {
@@ -255,7 +258,7 @@ class OctoStoreTransaction extends EventEmmiter {
                 }
                 if(data.post){
                     try {
-                        this.addLocally(data.post)
+                        this.putLocally(data.post)
                         this.trigger("post",data.post)
                     }
                     catch(e){}
@@ -287,7 +290,18 @@ class OctoStoreTransaction extends EventEmmiter {
                         this.deleteLocally(data.delete)
                     }
                     catch(e){}
-				}
+                }
+                if(data.setTags){
+                    try {
+                        let value = await this.getLocally(data.setTags.hash)
+                        value.tags = data.setTags.tags
+                        await this.putLocally(value)
+                        this.trigger("setTags",data.setTags)
+                    }
+                    catch(e){
+                        console.error(e)
+                    }
+                }
             })
         })
         this.peer.listAllPeers(list => {
@@ -301,6 +315,19 @@ class OctoStoreTransaction extends EventEmmiter {
             }
 			this.trigger("sync",list)
         })
+    }
+    search(tags){
+        let res = []
+        return new Promise(resolve => this.openCursor(event => {
+            let cursor = event.target.result
+            if(cursor){
+                tags.every(tag => cursor.value.tags.map(t => t.tag).includes(tag.tag)) && res.push(cursor.value)
+                cursor.continue()
+            }
+            else{
+                resolve(res)
+            }
+        }))
     }
     dispatch(data){
         for(let p in this.peer.connections) {
