@@ -10,7 +10,7 @@ peer = new Peer({
 	port: '',
 	path: '/kopi',
 	config: {
-		iceServers: iceServers.json()
+		iceServers: await iceServers.json()
 	},
     secure: true,
 	debug: 3
