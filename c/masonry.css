@@ -121,26 +121,41 @@
    margin-left: auto;
  }
 .masonry {
-   columns: 1;
-   column-gap: 4px;
+	columns: 1;
+	column-gap: 4px;
+}
+
+.masonry-footer{
+	height: 50px;
 }
 .masonry-item {
-   display: inline-block;
-   vertical-align: top;
-   margin-bottom: 0px;
-   padding:6px;
-   cursor: pointer;
+	display: inline-block;
+	vertical-align: top;
+	margin-bottom: 0px;
+	padding: 6px;
+	cursor: pointer;
+	animation-name: fadein;
+	animation-duration: 3s;
 }
- @media only screen and (max-width: 1023px) and (min-width: 300px) { 
+
+@keyframes fadein {
+  from {
+    opacity:0;
+  }
+  to {
+	opacity:1;
+  }
+}
+@media only screen and (max-width: 1023px) and (min-width: 300px) { 
     .masonry {
-     columns: 2;
+     columns: 1;
     }
  }
  @media only screen and (min-width: 1024px) {
    .masonry {
      columns: 10;
    }
- }
+}
 .masonry-content {
    border-radius: 4px;
    overflow: hidden;
