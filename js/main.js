@@ -102,7 +102,7 @@ Board = {
 					}
 				})
 			),
-            m('.center-align',{style:{position:'absolute',top:screen.height/2,left:screen.width/2.3}}, m(Preloader,{active:isLoading})),
+            m('.center-align',{style:{position:'absolute',top:screen.height/2,left:screen.width/(window.innerWidth > 600? 2.1 : 2.3)}}, m(Preloader,{active:isLoading})),
             m('.fixed-action-btn',
 				m(RoundIconButton,{
 					className: 'teal',
