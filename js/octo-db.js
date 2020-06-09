@@ -188,6 +188,19 @@ class OctoStoreTransaction extends EventEmmiter {
 			}
 		}
 	}
+	getAllTags(){
+		TagRegister.tags = {}
+		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
+		store.openCursor().onsuccess = event => {
+			let cursor = event.target.result
+			if(cursor){
+				for(let {tag} of cursor.value.tags){
+					TagRegister.add(tag)
+				}
+				cursor.continue()
+			}
+		}
+	}
 	postPage(page,pageSize,exept){
 		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
 		let i = 0

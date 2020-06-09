@@ -1,4 +1,4 @@
-let {Tabs, Button, FloatingActionButton, RoundIconButton, FileInput, ModalPanel, MaterialBox} = materialized
+let {Tabs, Button, FloatingActionButton, RoundIconButton, FileInput, ModalPanel, MaterialBox, Collection} = materialized
 
 class Router{
 	#current = ""
@@ -84,6 +84,7 @@ Board = {
 					placeholder: ' Search with tags',
 					data: SearchTags,
 					secondaryPlaceholder: '+Tag',
+					autocomplete: Nullate(TagRegister.tags),
 					onchange: async(data) => {
 						SearchTags = data
 						if(!data.length){
@@ -130,7 +131,7 @@ Board = {
 					m.redraw()
 				},
 				onopen: () => {
-					ContentModalState.prevTags = ContentModalState.tags
+					ContentModalState.prevTags = ContentModalState.tags.map(e => e.tag)
 					//document.getElementById('contentModal').style.width = '80%'
 					//document.getElementById('contentModal').style.height = '100%'
 				}
@@ -148,6 +149,9 @@ Chips = {
 			data: vnode.attrs.data?vnode.attrs.data:[], 
 			placeholder: vnode.attrs.placeholder, 
 			secondaryPlaceholder: vnode.attrs.secondaryPlaceholder,
+			autocompleteOptions: {
+				data: vnode.attrs.autocomplete
+			},
 			onChipAdd: el => {
 				vnode.attrs.onchange(el[0].M_Chips.chipsData)
 			},
@@ -223,14 +227,28 @@ ContentModalState = {
 }
 
 
+Tags = {
+	view: () =>
+		m('.card',[
+			m('h5','Теги'),
+			m('table',
+				Object.entries(TagRegister.tags).map(([i,e]) => m('tr',m('td',i),m('td',e)))
+			)
+		]),
+	onupdate(){
+		//main.getAllTags()
+	}
+}
+
 About = {
-    view: ()=>
+    view: () =>
         m('.card','About')
 }
 
 
 router = new Router({
 	'#board': Board,
+	'#tags' : Tags,
 	'#about': About
 })
 
@@ -243,8 +261,9 @@ Nav = {
                 m('a.brand-logo', {href: '#!'},m('img#logo',{src: 'logo.png',height: 55,style: {marginLeft: 10,marginTop: 2}})),
                 m('a.sidenav-trigger', {'data-target': "mobile-sidebar"}, m('i.material-icons.black-text','menu')),
                 m('ul.right.hide-on-med-and-down', [
-                    m('li',m('a.black-text.sidenav-close',{href: '#board',onclick: ()=> router.current = '#board'},'Доска')),
-                    m('li',m('a.black-text.sidenav-close',{href: '#about',onclick: ()=> router.current = '#about'},'О Kopichan'))
+                    m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: ()=> router.current = '#board'}, 'Доска')),
+					m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: ()=> router.current = '#tags' }, 'Теги')),
+                    m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: ()=> router.current = '#about'}, 'О Kopichan'))
                 ]),
             ])
 		),
@@ -262,8 +281,9 @@ App = {
         m('#app', [
 			m(Nav),
 			m('ul.sidenav#mobile-sidebar', [
-                m('li',m('a.black-text.sidenav-close',{href: '#board',onclick: ()=>router.current = '#board'},'Доска')),
-                m('li',m('a.black-text.sidenav-close',{href: '#about',onclick:()=>router.current = '#about'},'О Kopichan'))
+                m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: ()=>router.current = '#board'}, 'Доска')),
+				m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: ()=>router.current = '#tags' }, 'Теги')),
+                m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: ()=>router.current = '#about'}, 'О Kopichan'))
             ]),
             m('main',m(router.current))
         ])
@@ -271,6 +291,7 @@ App = {
 
 
 isInViewport = function(elem) {
+	if(!elem) return
     var bounding = elem.getBoundingClientRect();
     return (
         bounding.top >= 0 &&
@@ -307,4 +328,11 @@ function deepEqual(obj1,obj2){
 	else {
 		return obj1 == obj2
 	}
+}
+function Nullate(obj1){
+	obj2 = {}
+	for(let i in obj1){
+		obj2[i] = null
+	}
+	return obj2
 }

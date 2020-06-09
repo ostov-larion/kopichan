@@ -2,6 +2,29 @@ let page = 0
 let pageSize = window.innerWidth > 600 ? 50 : 10
 
 let isLoading = true;
+
+if(!localStorage.favs){
+	localStorage.favs = "{}"
+}
+if(!localStorage.blackListHashs){
+	localStorage.blackListHashs = "{}"
+}
+if(!localStorage.blackListTags){
+	localStorage.blackListTags = "{}"
+}
+
+TagRegister = {
+	tags: {},
+	add(tag) {
+		if(this.tags[tag]) {
+			this.tags[tag]++
+		}
+		else {
+			this.tags[tag] = 1
+		}
+	}
+};
+
 (async() => {
 	
 let iceServers = await fetch('https://cors-anywhere.herokuapp.com/https://kopichan-turn-server.herokuapp.com')
@@ -40,6 +63,7 @@ peer.on("open", async() => {
 	m.redraw()
 	main.on("sync", async(list) => {
 		main.getPageLocally(page,pageSize)
+		main.getAllTags()
 		main.on("peer",async() => {
 			M.toast({html: "New peer is connected."})
 			main.getPage(page,pageSize,await main.getAllKeys())
