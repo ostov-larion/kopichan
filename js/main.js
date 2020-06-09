@@ -113,7 +113,7 @@ Board = {
 			m(Modal,{
 				id: 'contentModal',
 				content:[
-					m(MaterialBox,{src: ContentModalState.src, width: window.innerWidth > 600 ? '35%' : "95%"}),
+					m('img.material-boxed.center',{src: ContentModalState.src, width: window.innerWidth > 600 ? '35%' : "95%"}),
 					m(Chips,{
 						id: 'contentTags',
 						data: ContentModalState.tags,
@@ -136,7 +136,7 @@ Board = {
 				}
 			}),
             m(Masonry),
-			m('#scroll','    ')
+			m('#scroll.center','     ---    ')
         ])
 }
 
