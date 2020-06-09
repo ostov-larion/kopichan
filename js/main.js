@@ -113,7 +113,7 @@ Board = {
 			m(Modal,{
 				id: 'contentModal',
 				content:[
-					m('img.material-boxed.center',{src: ContentModalState.src, width: window.innerWidth > 600 ? '35%' : "95%"}),
+					m(MaterialBox,{src: ContentModalState.src, width: window.innerWidth > 600 ? '35%' : "95%"}),
 					m(Chips,{
 						id: 'contentTags',
 						data: ContentModalState.tags,
