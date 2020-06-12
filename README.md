@@ -1,2 +1,2 @@
 # kopichan
-Kopichan is decentralized anonymous contentboard.
+Kopichan is decentralized anonymous booru.
