@@ -4,13 +4,28 @@ let pageSize = window.innerWidth > 600 ? 50 : 10
 let isLoading = true;
 
 if(!localStorage.favs){
-	localStorage.favs = "{}"
+	localStorage.favs = "[]"
 }
 if(!localStorage.blackListHashs){
-	localStorage.blackListHashs = "{}"
+	localStorage.blackListHashs = "[]"
 }
 if(!localStorage.blackListTags){
-	localStorage.blackListTags = "{}"
+	localStorage.blackListTags = "[]"
+}
+
+Favorites = {
+	contents: JSON.parse(localStorage.favs),
+	add(hash){
+		this.contents.push(hash)
+		localStorage.favs = JSON.stringify(this.contents)
+	},
+	remove(hash){
+		this.contents.splice(this.contents.indexOf(hash),1)
+		localStorage.favs = JSON.stringify(this.contents)
+	},
+	has(hash){
+		return this.contents.includes(hash)
+	}
 }
 
 TagRegister = {
@@ -27,13 +42,20 @@ TagRegister = {
 
 (async() => {
 	
-let iceServers = await fetch('https://cors-anywhere.herokuapp.com/https://kopichan-turn-server.herokuapp.com')
 peer = new Peer({
 	host: 'kopichan-server.herokuapp.com',
 	port: '',
 	path: '/kopi',
 	config: {
-		iceServers: await iceServers.json()
+		'iceServers': [
+							{
+								'urls': [
+									'stun:stun.l.google.com:19302',
+									'stun:stun1.l.google.com:19302'
+								]
+							}
+						],
+		'sdpSemantics': 'unified-plan' 
 	},
     secure: true,
 	debug: 3

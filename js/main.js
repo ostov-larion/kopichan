@@ -1,4 +1,4 @@
-let {Tabs, Button, FloatingActionButton, RoundIconButton, FileInput, ModalPanel, MaterialBox, Collection} = materialized
+let {Tabs, Button, FloatingActionButton, RoundIconButton, FlatButton, FileInput, ModalPanel, MaterialBox, Collection} = materialized
 
 class Router{
 	#current = ""
@@ -84,16 +84,23 @@ Board = {
 					placeholder: ' Search with tags',
 					data: SearchTags,
 					secondaryPlaceholder: '+Tag',
-					autocomplete: Nullate(TagRegister.tags),
+					autocomplete: {...Nullate(TagRegister.tags),favorites: null},
 					onchange: async(data) => {
 						SearchTags = data
-						if(!data.length){
+						let r = await main.search(data)
+						console.log(r)
+						if(!r.length && data.map(e => e.tag).excludes('favorites')){
 							MasonryState.contents = []
 							page = 0
 							main.getPageLocally(page,pageSize)
 							m.redraw()
 						}
-						let r = await main.search(data)
+						if(data.map(e => e.tag).includes('favorites')){
+							MasonryState.contents = []
+							page = 0
+							main.getPageLocally(page,pageSize,r)
+							m.redraw()
+						}
 						for(let i of r){
 							i.src = await FilePeruse(i.file)
 						}
@@ -118,8 +125,19 @@ Board = {
 					m(Chips,{
 						id: 'contentTags',
 						data: ContentModalState.tags,
-						onchange: data => ContentModalState.tags = data
-					})
+						onchange: data => ContentModalState.tags = data.sort((a,b) => {
+							if(a.tag > b.tag) return 1
+							if(a.tag < b.tag) return -1
+							return 0
+						})
+					}),
+					m('.right-align',m(FlatButton,{iconName: ContentModalState.liked?'favorite':'favorite_border', onclick: () =>
+						ContentModalState.liked
+						?
+						(Favorites.remove(ContentModalState.hash),ContentModalState.liked = false)
+						:
+						(Favorites.add(ContentModalState.hash),ContentModalState.liked = true)
+						}))
 				],
 				onclose: async() => {
 					main.dispatch({setTags:{hash: ContentModalState.hash, tags: ContentModalState.tags}})
@@ -132,12 +150,13 @@ Board = {
 				},
 				onopen: () => {
 					ContentModalState.prevTags = ContentModalState.tags.map(e => e.tag)
+					ContentModalState.liked = Favorites.has(ContentModalState.hash)
 					//document.getElementById('contentModal').style.width = '80%'
 					//document.getElementById('contentModal').style.height = '100%'
 				}
 			}),
             m(Masonry),
-			m('#scroll.center','     ---    ')
+			m('#scroll.center','   ')
         ])
 }
 
@@ -145,6 +164,20 @@ Chips = {
 	view: vnode => 
 		m('.chips',{id:vnode.attrs.id,class:vnode.attrs.class}),
 	onupdate(vnode){
+		M.Chips.init(vnode.dom,{
+			data: vnode.attrs.data?vnode.attrs.data:[], 
+			placeholder: vnode.attrs.placeholder, 
+			secondaryPlaceholder: vnode.attrs.secondaryPlaceholder,
+			autocompleteOptions: {
+				data: vnode.attrs.autocomplete
+			},
+			onChipAdd: el => {
+				vnode.attrs.onchange(el[0].M_Chips.chipsData)
+			},
+			onChipDelete: el => vnode.attrs.onchange(el[0].M_Chips.chipsData),
+		})
+	},
+	oncreate(vnode){
 		M.Chips.init(vnode.dom,{
 			data: vnode.attrs.data?vnode.attrs.data:[], 
 			placeholder: vnode.attrs.placeholder, 
@@ -262,6 +295,14 @@ Nav = {
                 m('a.sidenav-trigger', {'data-target': "mobile-sidebar"}, m('i.material-icons.black-text','menu')),
                 m('ul.right.hide-on-med-and-down', [
                     m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: ()=> router.current = '#board'}, 'Доска')),
+					m('li', m('a.black-text.sidenav-close', {href: '#favs' , onclick: async()=> {
+						SearchTags = [{tag:'favorites'}];
+						let r = await main.search(SearchTags)
+						MasonryState.contents = []
+						page = 0
+						main.getPageLocally(page,pageSize,r)
+						m.redraw()
+				}}, 'Любимое')),
 					m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: ()=> router.current = '#tags' }, 'Теги')),
                     m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: ()=> router.current = '#about'}, 'О Kopichan'))
                 ]),
@@ -281,9 +322,17 @@ App = {
         m('#app', [
 			m(Nav),
 			m('ul.sidenav#mobile-sidebar', [
-                m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: ()=>router.current = '#board'}, 'Доска')),
-				m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: ()=>router.current = '#tags' }, 'Теги')),
-                m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: ()=>router.current = '#about'}, 'О Kopichan'))
+                m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: ()=> router.current = '#board'}, 'Доска')),
+				m('li', m('a.black-text.sidenav-close', {href: '#favs' , onclick: async()=> {
+					SearchTags = [{tag:'favorites'}];
+					let r = await main.search(SearchTags)
+					MasonryState.contents = []
+					page = 0
+					main.getPageLocally(page,pageSize,r)
+					m.redraw()
+				}}, 'Любимое')),
+				m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: ()=> router.current = '#tags' }, 'Теги')),
+                m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: ()=> router.current = '#about'}, 'О Kopichan'))
             ]),
             m('main',m(router.current))
         ])
@@ -296,18 +345,16 @@ isInViewport = function(elem) {
     return (
         bounding.top >= 0 &&
         bounding.left >= 0 &&
-        bounding.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-        bounding.right <= (window.innerWidth || document.documentElement.clientWidth)
+        Math.floor(bounding.bottom) <= (window.innerHeight || document.documentElement.clientHeight) &&
+        Math.floor(bounding.right) <= (window.innerWidth || document.documentElement.clientWidth)
     );
 };
 
 m.mount(document.body,App)
 
 document.onscroll = async function(){
-	console.log('Scroll')
 	if(isInViewport(document.getElementById('scroll'))) {
-		console.log('VIEWPORT!!!')
-		if(await main.count() > page*pageSize){
+		if(await main.count() >= page*pageSize){
 			page++
 			main.getPageLocally(page,pageSize,MasonryState.contents.length-1)
 		}

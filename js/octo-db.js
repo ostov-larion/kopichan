@@ -173,7 +173,8 @@ class OctoStoreTransaction extends EventEmmiter {
 		this.scheme.beforeGetPage && this.scheme.beforeGetPage(page,pageSize)
 		this.dispatch({getPage: {page,pageSize,exept: await this.getAllKeys()}})
 	}
-	getPageLocally(page,pageSize,current){
+	getPageLocally(page,pageSize,includes){
+		console.log('includes',includes)
 		this.scheme.beforeGetPage && this.scheme.beforeGetPage(page,pageSize)
 		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
 		let i = 0
@@ -181,7 +182,12 @@ class OctoStoreTransaction extends EventEmmiter {
 			let cursor = event.target.result
 			if(cursor){
 				if(i <= (page * pageSize) + pageSize){
-					this.trigger("page",cursor.value)
+					if(includes && includes.map(e => e.hash).includes(cursor.value.hash)) {
+						this.trigger("page",cursor.value)
+					}
+					if(!includes){
+						this.trigger("page",cursor.value)
+					}
 					cursor.continue()
 				}
 				i++
@@ -330,6 +336,7 @@ class OctoStoreTransaction extends EventEmmiter {
         })
     }
     search(tags){
+		if(tags.map(e => e.tag).includes('favorites')) return this.searchFavorites(tags.filter(e => e.tag != 'favorites'))
         let res = []
         return new Promise(resolve => this.openCursor(event => {
             let cursor = event.target.result
@@ -342,6 +349,20 @@ class OctoStoreTransaction extends EventEmmiter {
             }
         }))
     }
+	searchFavorites(tags){
+		console.log(tags)
+		let res = []
+        return new Promise(resolve => this.openCursor(event => {
+            let cursor = event.target.result
+            if(cursor){
+                Favorites.has(cursor.value.hash) && tags.every(tag => cursor.value.tags.map(t => t.tag).includes(tag.tag)) && res.push(cursor.value)
+                cursor.continue()
+            }
+            else{
+                resolve(res)
+            }
+        }))
+	}
     dispatch(data){
         for(let p in this.peer.connections) {
             if(this.peer.connections[p]){
