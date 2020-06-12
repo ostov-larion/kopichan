@@ -55,7 +55,7 @@ peer = new Peer({
 								]
 							}
 						],
-		'sdpSemantics': 'unified-plan' 
+		//'sdpSemantics': 'unified-plan' 
 	},
     secure: true,
 	debug: 3
