@@ -169,9 +169,9 @@ class OctoStoreTransaction extends EventEmmiter {
             request.onerror = () => reject(request.error)
         })
     }
-	async getPage(page,pageSize){
+	async getPage(page,pageSize,excludes){
 		this.scheme.beforeGetPage && this.scheme.beforeGetPage(page,pageSize)
-		this.dispatch({getPage: {page,pageSize,exept: await this.getAllKeys()}})
+		this.dispatch({getPage: {page,pageSize,exept: {...await this.getAllKeys(),...excludes}}})
 	}
 	getPageLocally(page,pageSize,includes){
 		console.log('includes',includes)

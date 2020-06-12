@@ -18,10 +18,26 @@ Favorites = {
 	add(hash){
 		this.contents.push(hash)
 		localStorage.favs = JSON.stringify(this.contents)
+		BlacklistHashs.remove(hash)
 	},
 	remove(hash){
 		this.contents.splice(this.contents.indexOf(hash),1)
 		localStorage.favs = JSON.stringify(this.contents)
+	},
+	has(hash){
+		return this.contents.includes(hash)
+	}
+}
+BlacklistHashs = {
+	contents: JSON.parse(localStorage.blackListHashs),
+	add(hash){
+		this.contents.push(hash)
+		localStorage.blackListHashs = JSON.stringify(this.contents)
+		Favorites.remove(hash)
+	},
+	remove(hash){
+		this.contents.splice(this.contents.indexOf(hash),1)
+		localStorage.blackListHashs = JSON.stringify(this.contents)
 	},
 	has(hash){
 		return this.contents.includes(hash)
@@ -116,7 +132,7 @@ peer.on("open", async() => {
 		main.getAllTags()
 		main.on("peer",async() => {
 			M.toast({html: "New peer is connected."})
-			main.getPage(page,pageSize,await main.getAllKeys())
+			main.getPage(page,pageSize,BlacklistHashs.contents)
 		})
 		M.toast({html:'Getting DB...'})
 		main.on('page', data => {

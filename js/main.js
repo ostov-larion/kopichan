@@ -40,7 +40,11 @@ MasonryState = {
 		if(MasonryState.contents.find(e => e.hash == hash)) return true
         MasonryState.contents.push({hash, file, src, tags})
 		m.redraw()
-    }
+    },
+	remove(hash){
+		MasonryState.contents = MasonryState.contents.filter(e => e.hash != hash)
+		m.redraw()
+	}
 }
 
 Masonry = {
@@ -131,13 +135,22 @@ Board = {
 							return 0
 						})
 					}),
-					m('.right-align',m(FlatButton,{iconName: ContentModalState.liked?'favorite':'favorite_border', onclick: () =>
-						ContentModalState.liked
-						?
-						(Favorites.remove(ContentModalState.hash),ContentModalState.liked = false)
-						:
-						(Favorites.add(ContentModalState.hash),ContentModalState.liked = true)
-						}))
+					m('.right-align',[
+						m('i.material-icons.reversed.text-hoverable',{ onclick: () =>
+							ContentModalState.hated
+							?
+							(BlacklistHashs.remove(ContentModalState.hash), ContentModalState.hated = false)
+							:
+							(BlacklistHashs.add(ContentModalState.hash), ContentModalState.hated = true, ContentModalState.liked = false)
+						},ContentModalState.hated?'favorite':'favorite_border'),
+						m('i.material-icons.text-hoverable',{ onclick: () =>
+							ContentModalState.liked
+							?
+							(Favorites.remove(ContentModalState.hash), ContentModalState.liked = false)
+							:
+							(Favorites.add(ContentModalState.hash), ContentModalState.liked = true, ContentModalState.hated = false)
+						},ContentModalState.liked?'favorite':'favorite_border')
+					])
 				],
 				onclose: async() => {
 					main.dispatch({setTags:{hash: ContentModalState.hash, tags: ContentModalState.tags}})
@@ -146,11 +159,18 @@ Board = {
                     await main.putLocally(value)
 					ContentModalState.tags = []
 					ContentModalState.prevTags = []
+					ContentModalState.liked = false
+					ContentModalState.hated = false
+					if(ContentModalState.hated){
+						main.deleteLocally(ContentModalState.hash)
+						MasonryState.remove(ContentModalState.hash)
+					}
 					m.redraw()
 				},
 				onopen: () => {
 					ContentModalState.prevTags = ContentModalState.tags.map(e => e.tag)
 					ContentModalState.liked = Favorites.has(ContentModalState.hash)
+					ContentModalState.hated = BlacklistHashs.has(ContentModalState.hash)
 					//document.getElementById('contentModal').style.width = '80%'
 					//document.getElementById('contentModal').style.height = '100%'
 				}
@@ -292,6 +312,7 @@ Nav = {
 		m('.navbar-fixed',
             m('nav.nav-wrapper', {class: 'grey lighten-5',style:'user-select:none;'}, [
                 m('a.brand-logo', {href: '#!'},m('img#logo',{src: 'logo.png',height: 55,style: {marginLeft: 10,marginTop: 2}})),
+				m('span.brand-name.hide-on-med-and-down',{style: 'font-family: Roboto Mono, monospace; font-size: 1.5em;position: fixed; left: 5%; color: black;'},'opichan'),
                 m('a.sidenav-trigger', {'data-target': "mobile-sidebar"}, m('i.material-icons.black-text','menu')),
                 m('ul.right.hide-on-med-and-down', [
                     m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: ()=> router.current = '#board'}, 'Доска')),
