@@ -282,8 +282,8 @@ ContentModalState = {
 
 Tags = {
 	view: () =>
-		m('.card',[
-			m('h5','Теги'),
+		m('.card-panel',[
+			m('h6.card-title',{style: 'font-family: monospace; font-weight: bold;'},'Теги'),
 			m('table',
 				Object.entries(TagRegister.tags).map(([i,e]) => m('tr',m('td',i),m('td',e)))
 			)
@@ -291,6 +291,26 @@ Tags = {
 	onupdate(){
 		//main.getAllTags()
 	}
+}
+
+BlackList = {
+	view: () => 
+		m('.card-panel',[
+			m('h6.card-title',{style: 'font-family: monospace; font-weight: bold;'},'Скрываемые теги'),
+			m(Chips,{
+				placeholder: BlacklistTags.contents.length ? 'Негодные теги' : '',
+				data: BlacklistTags.contents.map(e => ({tag: e})),
+				onchange: data => {
+					BlacklistTags.set(data.map(e => e.tag))
+					BlacklistTags.accept = true
+					m.redraw()
+				}
+			}),
+			m('.right-align', m(FlatButton,{label: "Принять", class: BlacklistTags.accept ? undefined : "disabled", onclick: () => {
+				BlacklistTags.accept = false
+				main.deleteWithTags(BlacklistTags.contents)
+			}}))
+		])
 }
 
 About = {
@@ -302,6 +322,7 @@ About = {
 router = new Router({
 	'#board': Board,
 	'#tags' : Tags,
+	'#blacklist': BlackList,
 	'#about': About
 })
 
@@ -315,8 +336,8 @@ Nav = {
 				m('span.brand-name.hide-on-med-and-down',{style: 'font-family: Roboto Mono, monospace; font-size: 1.5em;position: fixed; left: 5%; color: black;'},'opichan'),
                 m('a.sidenav-trigger', {'data-target': "mobile-sidebar"}, m('i.material-icons.black-text','menu')),
                 m('ul.right.hide-on-med-and-down', [
-                    m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: ()=> router.current = '#board'}, 'Доска')),
-					m('li', m('a.black-text.sidenav-close', {href: '#favs' , onclick: async()=> {
+                    m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: () => router.current = '#board'}, 'Доска')),
+					m('li', m('a.black-text.sidenav-close', {href: '#favs' , onclick: async() => {
 						SearchTags = [{tag:'favorites'}];
 						let r = await main.search(SearchTags)
 						MasonryState.contents = []
@@ -324,9 +345,9 @@ Nav = {
 						main.getPageLocally(page,pageSize,r)
 						m.redraw()
 				}}, 'Любимое')),
-					m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: ()=> router.current = '#tags' }, 'Теги')),
-					m('li', m('a.black-text.sidenav-close', {href: '#blacklist' , onclick: ()=> router.current = '#blacklist' }, 'Черный список')),
-                    m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: ()=> router.current = '#about'}, 'О Kopichan'))
+					m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: () => router.current = '#tags' }, 'Теги')),
+					m('li', m('a.black-text.sidenav-close', {href: '#blacklist' , onclick: () => router.current = '#blacklist' }, 'Скрываемые теги')),
+                    m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: () => router.current = '#about'}, 'О Kopichan'))
                 ]),
             ])
 		),
@@ -354,6 +375,7 @@ App = {
 					m.redraw()
 				}}, 'Любимое')),
 				m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: ()=> router.current = '#tags' }, 'Теги')),
+				m('li', m('a.black-text.sidenav-close', {href: '#blacklist' , onclick: () => router.current = '#blacklist' }, 'Скрываемые теги')),
                 m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: ()=> router.current = '#about'}, 'О Kopichan'))
             ]),
             m('main',m(router.current))

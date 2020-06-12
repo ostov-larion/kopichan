@@ -44,6 +44,15 @@ BlacklistHashs = {
 	}
 }
 
+BlacklistTags = {
+	accept: false,
+	contents: JSON.parse(localStorage.blackListTags),
+	set(data){
+		this.contents = data
+		localStorage.blackListTags = JSON.stringify(this.contents)
+	}
+}
+
 TagRegister = {
 	tags: {},
 	add(tag) {

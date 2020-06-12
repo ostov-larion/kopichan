@@ -169,9 +169,9 @@ class OctoStoreTransaction extends EventEmmiter {
             request.onerror = () => reject(request.error)
         })
     }
-	async getPage(page,pageSize,excludes){
+	async getPage(page,pageSize,excludes,exeptTags){
 		this.scheme.beforeGetPage && this.scheme.beforeGetPage(page,pageSize)
-		this.dispatch({getPage: {page,pageSize,exept: {...await this.getAllKeys(),...excludes}}})
+		this.dispatch({getPage: {page,pageSize,exept: {...await this.getAllKeys(),...excludes},exeptTags}})
 	}
 	getPageLocally(page,pageSize,includes){
 		console.log('includes',includes)
@@ -207,7 +207,7 @@ class OctoStoreTransaction extends EventEmmiter {
 			}
 		}
 	}
-	postPage(page,pageSize,exept){
+	postPage(page,pageSize,exept,exeptTags){
 		var exept = obj2arr(exept)
 		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
 		let i = 0
@@ -215,7 +215,7 @@ class OctoStoreTransaction extends EventEmmiter {
 			let cursor = event.target.result
 			if(cursor){
 				if(i >= page * pageSize && i <= (page * pageSize) + pageSize){
-					if(exept.includes && !exept.includes(cursor.key)){
+					if(!exept.includes(cursor.key) && !exeptTags.find(tag => cursor.value.tags.map(t => t.tag).includes(tag))){
 						this.dispatch({post: cursor.value})
 					}
 					cursor.continue()
@@ -270,7 +270,7 @@ class OctoStoreTransaction extends EventEmmiter {
                     this.dispatch({ postAll: s })
                 }
 				if(data.getPage) {
-                    ctx.postPage(data.getPage.page,data.getPage.pageSize,data.getPage.exept)
+                    ctx.postPage(data.getPage.page,data.getPage.pageSize,data.getPage.exept,data.getPage.exeptTags)
                 }
                 if(data.get) {
                     let s = await ctx.getLocally(data.get)
@@ -307,7 +307,7 @@ class OctoStoreTransaction extends EventEmmiter {
                 }
 				if(data.delete){
 					try {
-                        this.deleteLocally(data.delete)
+                        //this.deleteLocally(data.delete)
                     }
                     catch(e){}
                 }
@@ -350,8 +350,16 @@ class OctoStoreTransaction extends EventEmmiter {
             }
         }))
     }
+	deleteWithTags(tags){
+        return new Promise(resolve => this.openCursor(event => {
+            let cursor = event.target.result
+            if(cursor){
+                tags.find(tag => cursor.value.tags.map(t => t.tag).includes(tag)) && (this.deleteLocally(cursor.value.hash),BlacklistHashs.add(cursor.value.hash))
+                cursor.continue()
+            }
+        }))
+	}
 	searchFavorites(tags){
-		console.log(tags)
 		let res = []
         return new Promise(resolve => this.openCursor(event => {
             let cursor = event.target.result
