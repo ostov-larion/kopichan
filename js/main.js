@@ -159,12 +159,12 @@ Board = {
                     await main.putLocally(value)
 					ContentModalState.tags = []
 					ContentModalState.prevTags = []
-					ContentModalState.liked = false
-					ContentModalState.hated = false
 					if(ContentModalState.hated){
 						main.deleteLocally(ContentModalState.hash)
 						MasonryState.remove(ContentModalState.hash)
 					}
+					ContentModalState.liked = false
+					ContentModalState.hated = false
 					m.redraw()
 				},
 				onopen: () => {
@@ -325,6 +325,7 @@ Nav = {
 						m.redraw()
 				}}, 'Любимое')),
 					m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: ()=> router.current = '#tags' }, 'Теги')),
+					m('li', m('a.black-text.sidenav-close', {href: '#blacklist' , onclick: ()=> router.current = '#blacklist' }, 'Черный список')),
                     m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: ()=> router.current = '#about'}, 'О Kopichan'))
                 ]),
             ])
