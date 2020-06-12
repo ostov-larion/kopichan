@@ -208,13 +208,14 @@ class OctoStoreTransaction extends EventEmmiter {
 		}
 	}
 	postPage(page,pageSize,exept){
+		var exept = obj2arr(exept)
 		let store = this.#db.transaction(this.name,"readwrite").objectStore(this.name)
 		let i = 0
 		store.openCursor().onsuccess = event => {
 			let cursor = event.target.result
 			if(cursor){
 				if(i >= page * pageSize && i <= (page * pageSize) + pageSize){
-					if(!exept.includes(cursor.key)){
+					if(exept.includes && !exept.includes(cursor.key)){
 						this.dispatch({post: cursor.value})
 					}
 					cursor.continue()
@@ -370,4 +371,11 @@ class OctoStoreTransaction extends EventEmmiter {
             }
         }
     }
+}
+function obj2arr(obj){
+	let arr = []
+	for(let i in obj){
+		arr[i] = obj[i]
+	}
+	return arr
 }
