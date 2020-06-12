@@ -21,3 +21,9 @@ body{
 }
 .dynamic{position:relative}
 .dynamic:hover{top:2px;left:1px;box-shadow:0px 0px 0px 0px gray;}
+.reversed{
+	transform: rotate(180deg);
+}
+.text-hoverable {
+	cursor: pointer;
+}
