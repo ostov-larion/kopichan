@@ -12,6 +12,9 @@ if(!localStorage.blackListHashs){
 if(!localStorage.blackListTags){
 	localStorage.blackListTags = "[]"
 }
+if(!localStorage.followTags){
+	localStorage.followTags = "[]"
+}
 
 Favorites = {
 	contents: JSON.parse(localStorage.favs),
@@ -50,6 +53,13 @@ BlacklistTags = {
 	set(data){
 		this.contents = data
 		localStorage.blackListTags = JSON.stringify(this.contents)
+	}
+}
+
+FollowTagsState = {
+	contents: JSON.parse(localStorage.followTags),
+	save(){
+		localStorage.followTags = JSON.stringify(this.contents)
 	}
 }
 

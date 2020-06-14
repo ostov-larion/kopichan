@@ -1,12 +1,14 @@
-let {Tabs, Button, FloatingActionButton, RoundIconButton, FlatButton, FileInput, ModalPanel, MaterialBox, Collection} = materialized
+let {Tabs, Button, FloatingActionButton, RoundIconButton, FlatButton, FileInput, ModalPanel, MaterialBox, Collection,TextInput} = materialized
 
 class Router{
 	#current = ""
-	constructor(routes,current){
+	constructor(routes){
 		this.routes = routes
-		this.#current = routes[current]
+		this.current = location.hash || routes.default
+		window.onhashchange = () => this.current = location.hash
 	}
 	set current(v){
+		console.log(v,this.routes[v])
 		this.#current = this.routes[v]
 		m.redraw()
 	}
@@ -129,11 +131,9 @@ Board = {
 					m(Chips,{
 						id: 'contentTags',
 						data: ContentModalState.tags,
-						onchange: data => ContentModalState.tags = data.sort((a,b) => {
-							if(a.tag > b.tag) return 1
-							if(a.tag < b.tag) return -1
-							return 0
-						})
+						onchange: data => {
+							ContentModalState.tags = data
+						}
 					}),
 					m('.right-align',[
 						m('i.material-icons.reversed.text-hoverable',{ onclick: () =>
@@ -153,6 +153,15 @@ Board = {
 					])
 				],
 				onclose: async() => {
+					let d = ContentModalState.tags.map(e => e.tag)
+					for(let [from,to] of FollowTagsState.contents) {
+						from.every(e => d.includes(e.tag)) && to.map(e => !d.includes(e.tag) && ContentModalState.tags.push(e))
+					}
+					ContentModalState.tags = ContentModalState.tags.sort((a,b) => {
+								if(a.tag > b.tag) return 1
+								if(a.tag < b.tag) return -1
+								return 0
+							})
 					main.dispatch({setTags:{hash: ContentModalState.hash, tags: ContentModalState.tags}})
 					let value = await main.getLocally(ContentModalState.hash)
                     value.tags = ContentModalState.tags
@@ -193,8 +202,12 @@ Chips = {
 			},
 			onChipAdd: el => {
 				vnode.attrs.onchange(el[0].M_Chips.chipsData)
+				//m.redraw()
 			},
-			onChipDelete: el => vnode.attrs.onchange(el[0].M_Chips.chipsData),
+			onChipDelete: el => {
+				vnode.attrs.onchange(el[0].M_Chips.chipsData)
+				//m.redraw()
+			},
 		})
 	},
 	oncreate(vnode){
@@ -266,7 +279,6 @@ addContentModal = () => m(Modal,{
 					})
 					await main.add({hash: md5(fr.result),tags: sorted, file:UploadState.file})
 					UploadState.tags = []
-					m.redraw()
 				}
             }
         },'Upload')
@@ -313,6 +325,53 @@ BlackList = {
 		])
 }
 
+MapEditor = {
+	view: vnode =>
+		m('table', [
+			...Object.entries(FollowTagsState.contents).map(([index,[i,e]]) => 
+				m('tr',
+					m('td',
+						m(Chips,{data: i, onchange: data => {
+							if(!data.length){
+								FollowTagsState.contents.splice(index)
+								return
+							}
+							FollowTagsState.contents[index] = [data,e]
+							FollowTagsState.save()
+							m.redraw()
+						}})
+					),
+					m('td',
+						m(Chips,{data: e,  onchange: data => {
+							if(!data.length){
+								FollowTagsState.contents.splice(index)
+								return
+							}
+							FollowTagsState.contents[index] = [i,data]
+							FollowTagsState.save()
+							m.redraw()
+						}})
+					)
+				)
+			),
+			m('tr',
+					m('td',
+						m(FlatButton,{
+							iconName: 'add',
+							onclick: () => FollowTagsState.contents.push([[],[]])
+						})
+					)
+			)
+		])
+}
+
+FollowTags = {
+	view: () =>
+		m('.card',
+			m(MapEditor)
+		)
+}
+
 About = {
     view: () =>
         m('.card','About')
@@ -323,10 +382,10 @@ router = new Router({
 	'#board': Board,
 	'#tags' : Tags,
 	'#blacklist': BlackList,
-	'#about': About
+	'#follow_tags': FollowTags,
+	'#about': About,
+	default: '#board'
 })
-
-router.current = '#board'
 
 Nav = {
 	view: () =>
@@ -336,8 +395,8 @@ Nav = {
 				m('span.brand-name.hide-on-med-and-down',{style: 'font-family: Roboto Mono, monospace; font-size: 1.5em;position: fixed; left: 5%; color: black;'},'opichan'),
                 m('a.sidenav-trigger', {'data-target': "mobile-sidebar"}, m('i.material-icons.black-text','menu')),
                 m('ul.right.hide-on-med-and-down', [
-                    m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: () => router.current = '#board'}, 'Доска')),
-					m('li', m('a.black-text.sidenav-close', {href: '#favs' , onclick: async() => {
+                    m('li', m('a.black-text.sidenav-close', {href: '#board'}, 'Доска')),
+					m('li', m('a.black-text.sidenav-close', {onclick: async() => {
 						SearchTags = [{tag:'favorites'}];
 						let r = await main.search(SearchTags)
 						MasonryState.contents = []
@@ -345,9 +404,10 @@ Nav = {
 						main.getPageLocally(page,pageSize,r)
 						m.redraw()
 				}}, 'Любимое')),
-					m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: () => router.current = '#tags' }, 'Теги')),
-					m('li', m('a.black-text.sidenav-close', {href: '#blacklist' , onclick: () => router.current = '#blacklist' }, 'Скрываемые теги')),
-                    m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: () => router.current = '#about'}, 'О Kopichan'))
+					m('li', m('a.black-text.sidenav-close', {href: '#tags' }, 'Теги')),
+					m('li', m('a.black-text.sidenav-close', {href: '#blacklist' }, 'Скрываемые теги')),
+					m('li', m('a.black-text.sidenav-close', {href: '#follow_tags' }, 'Сопутствующие теги')),
+                    m('li', m('a.black-text.sidenav-close', {href: '#about'}, 'О Kopichan'))
                 ]),
             ])
 		),
@@ -365,8 +425,8 @@ App = {
         m('#app', [
 			m(Nav),
 			m('ul.sidenav#mobile-sidebar', [
-                m('li', m('a.black-text.sidenav-close', {href: '#board', onclick: ()=> router.current = '#board'}, 'Доска')),
-				m('li', m('a.black-text.sidenav-close', {href: '#favs' , onclick: async()=> {
+                m('li', m('a.black-text.sidenav-close', {href: '#board'}, 'Доска')),
+				m('li', m('a.black-text.sidenav-close', {onclick: async()=> {
 					SearchTags = [{tag:'favorites'}];
 					let r = await main.search(SearchTags)
 					MasonryState.contents = []
@@ -374,9 +434,9 @@ App = {
 					main.getPageLocally(page,pageSize,r)
 					m.redraw()
 				}}, 'Любимое')),
-				m('li', m('a.black-text.sidenav-close', {href: '#tags' , onclick: ()=> router.current = '#tags' }, 'Теги')),
-				m('li', m('a.black-text.sidenav-close', {href: '#blacklist' , onclick: () => router.current = '#blacklist' }, 'Скрываемые теги')),
-                m('li', m('a.black-text.sidenav-close', {href: '#about', onclick: ()=> router.current = '#about'}, 'О Kopichan'))
+				m('li', m('a.black-text.sidenav-close', {href: '#tags' }, 'Теги')),
+				m('li', m('a.black-text.sidenav-close', {href: '#blacklist' }, 'Скрываемые теги')),
+                m('li', m('a.black-text.sidenav-close', {href: '#about'}, 'О Kopichan'))
             ]),
             m('main',m(router.current))
         ])
