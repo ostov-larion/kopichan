@@ -1,0 +1,21 @@
+{
+    "name": "Kopichan",
+    "short_name": "Kopichan",
+    "description": "PWA for Kopichan",
+    "icons": [
+        {
+            "src": "icons/logo.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/logo.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "index.html",
+    "display": "fullscreen",
+    "theme_color": "#000",
+    "background_color": "#FFF"
+}

@@ -3,6 +3,20 @@
 		<title>Kopichan</title>
 		<meta charset="utf-8">
 		<meta name='viewport' content="width=device-width"/>
+		<link rel="manifest" href="manifest.json">
+		<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('sw.js').then(function(registration) {
+            // Registration was successful
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, function(err) {
+            // registration failed :(
+            console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
+</script>
 		<link href="c/masonry.css" rel=stylesheet></link>
 		<link href="css/materialize.css" rel=stylesheet></link>
 		<link href="css/main.css" rel=stylesheet></link>
